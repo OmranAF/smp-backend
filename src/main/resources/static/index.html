@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SMP Patient Demo</title>
+    <style>
+        :root {
+            --bg: #07111f;
+            --panel: rgba(10, 18, 32, 0.78);
+            --panel-strong: #0c1728;
+            --line: rgba(255, 255, 255, 0.12);
+            --text: #e8eefc;
+            --muted: #9fb0ce;
+            --accent: #58d6c8;
+            --accent-2: #7c8cff;
+            --warn: #ffcb6b;
+            --danger: #ff7a90;
+            --shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(88, 214, 200, 0.22), transparent 32%),
+                radial-gradient(circle at 80% 10%, rgba(124, 140, 255, 0.24), transparent 26%),
+                linear-gradient(160deg, #040816 0%, #091424 44%, #060b15 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent 90%);
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            width: min(1200px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 48px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 24px;
+            align-items: stretch;
+            margin-bottom: 24px;
+        }
+
+        .brand {
+            padding: 30px;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(9, 18, 32, 0.94), rgba(14, 24, 42, 0.75));
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .brand::after {
+            content: "";
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            right: -120px;
+            top: -120px;
+            background: radial-gradient(circle, rgba(88, 214, 200, 0.22), transparent 62%);
+            filter: blur(12px);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(88, 214, 200, 0.24);
+            background: rgba(88, 214, 200, 0.08);
+            color: var(--accent);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 18px 0 12px;
+            font-size: clamp(2.2rem, 4vw, 4.4rem);
+            line-height: 0.98;
+            letter-spacing: -0.05em;
+        }
+
+        .lead {
+            max-width: 62ch;
+            color: var(--muted);
+            font-size: 1.02rem;
+            line-height: 1.7;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .stat {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 1.3rem;
+        }
+
+        .stat span {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .side-card {
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: linear-gradient(180deg, rgba(13, 22, 38, 0.92), rgba(10, 17, 30, 0.82));
+            box-shadow: var(--shadow);
+            padding: 22px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .mini-card {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .mini-card h3,
+        .panel h2,
+        .panel h3 {
+            margin: 0 0 8px;
+        }
+
+        .mini-card p,
+        .panel p,
+        label,
+        .hint,
+        .status-line,
+        .booking-item small {
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 0.92fr 1.08fr;
+            gap: 24px;
+        }
+
+        .panel {
+            padding: 24px;
+            border-radius: 26px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+        }
+
+        .panel + .panel {
+            margin-top: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .field {
+            display: grid;
+            gap: 8px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(6, 11, 20, 0.92);
+            color: var(--text);
+            border-radius: 14px;
+            padding: 14px 15px;
+            font: inherit;
+            outline: none;
+            transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: rgba(88, 214, 200, 0.8);
+            box-shadow: 0 0 0 4px rgba(88, 214, 200, 0.12);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 14px;
+            padding: 13px 16px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.18s ease, filter 0.18s ease, opacity 0.18s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        .primary {
+            color: #041018;
+            background: linear-gradient(135deg, var(--accent), #9cf2e9);
+        }
+
+        .secondary {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .ghost {
+            color: var(--muted);
+            background: transparent;
+            border: 1px dashed rgba(255, 255, 255, 0.14);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .pill input {
+            width: auto;
+            margin: 0;
+            accent-color: var(--accent);
+        }
+
+        .booking-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .booking-item {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .booking-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .badge {
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .badge.pending {
+            background: rgba(255, 203, 107, 0.15);
+            color: var(--warn);
+        }
+
+        .badge.confirmed {
+            background: rgba(88, 214, 200, 0.15);
+            color: var(--accent);
+        }
+
+        .badge.cancelled {
+            background: rgba(255, 122, 144, 0.15);
+            color: var(--danger);
+        }
+
+        .notice {
+            margin-top: 14px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(88, 214, 200, 0.08);
+            border: 1px solid rgba(88, 214, 200, 0.22);
+            color: #d8fff8;
+        }
+
+        .notice.error {
+            background: rgba(255, 122, 144, 0.1);
+            border-color: rgba(255, 122, 144, 0.24);
+            color: #ffd6de;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .doctor-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 999px;
+            background: rgba(124, 140, 255, 0.12);
+            color: #d7ddff;
+            border: 1px solid rgba(124, 140, 255, 0.24);
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        @media (max-width: 1024px) {
+            .hero,
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .page {
+                width: min(100% - 20px, 1200px);
+                padding-top: 14px;
+            }
+
+            .stats,
+            .form-grid,
+            .split {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="page">
+    <section class="hero">
+        <article class="brand">
+            <span class="eyebrow">SMP Patient Demo</span>
+            <h1>Login, pick a service, and book an appointment.</h1>
+            <p class="lead">
+                This is a demo booking flow for patients. It uses real backend endpoints for login, doctors, services,
+                allergies, documents, health status, and appointment booking.
+            </p>
+            <div class="stats">
+                <div class="stat">
+                    <strong>3 steps</strong>
+                    <span>Login, choose, book.</span>
+                </div>
+                <div class="stat">
+                    <strong>Backend connected</strong>
+                    <span>Catalogs and booking are fetched live.</span>
+                </div>
+                <div class="stat">
+                    <strong>Mobile ready</strong>
+                    <span>Works on desktop and phone.</span>
+                </div>
+            </div>
+        </article>
+
+        <aside class="side-card">
+            <div class="mini-card">
+                <h3>Available today</h3>
+                <p>Dr. Sara Ali · Dermatology · 09:00 - 13:00</p>
+                <p>Dr. Karim Hassan · General Medicine · 10:00 - 16:00</p>
+            </div>
+            <div class="mini-card">
+                <h3>Patient profile</h3>
+                <p>Allergies, document uploads, and health status notes are sent to the backend.</p>
+            </div>
+            <div class="mini-card">
+                <h3>Booking state</h3>
+                <p id="currentState">Not logged in yet.</p>
+            </div>
+        </aside>
+    </section>
+
+    <section class="grid">
+        <div>
+            <article class="panel" id="loginPanel">
+                <div class="toolbar">
+                    <div>
+                        <h2>Patient Login</h2>
+                        <p>Use your patient credentials to unlock booking.</p>
+                    </div>
+                    <span class="doctor-chip">API connected</span>
+                </div>
+
+                <form id="loginForm" class="form-grid">
+                    <div class="field full">
+                        <label for="loginEmail">Email</label>
+                        <input id="loginEmail" type="email" placeholder="patient@example.com" required />
+                    </div>
+                    <div class="field">
+                        <label for="loginPassword">Password</label>
+                        <input id="loginPassword" type="password" placeholder="Enter password" required />
+                    </div>
+                    <div class="field">
+                        <label for="patientCode">Patient code</label>
+                        <input id="patientCode" type="text" placeholder="PAT-2048" />
+                    </div>
+                    <div class="actions full">
+                        <button class="primary" type="submit">Login as Patient</button>
+                        <button class="secondary" type="button" id="fillDemoLogin">Fill demo data</button>
+                    </div>
+                </form>
+
+                <div class="notice hidden" id="loginNotice"></div>
+            </article>
+
+            <article class="panel hidden" id="bookingPanel">
+                <div class="toolbar">
+                    <div>
+                        <h2>Book Appointment</h2>
+                        <p>Choose a doctor service, slot, allergies, and notes.</p>
+                    </div>
+                    <button class="ghost" type="button" id="logoutBtn">Logout</button>
+                </div>
+
+                <form id="bookingForm">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="doctorSelect">Doctor</label>
+                            <select id="doctorSelect" required>
+                                <option value="">Loading doctors...</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="serviceSelect">Service</label>
+                            <select id="serviceSelect" required>
+                                <option value="">Select a doctor first</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="appointmentDate">Date</label>
+                            <input id="appointmentDate" type="date" required />
+                        </div>
+                        <div class="field">
+                            <label for="appointmentTime">Time</label>
+                            <select id="appointmentTime" required>
+                                <option value="">Choose a slot</option>
+                                <option>09:00</option>
+                                <option>09:30</option>
+                                <option>10:00</option>
+                                <option>10:30</option>
+                                <option>11:00</option>
+                                <option>11:30</option>
+                                <option>12:00</option>
+                                <option>12:30</option>
+                            </select>
+                        </div>
+                        <div class="field full">
+                            <label>Allergies</label>
+                            <div class="pill-row" id="allergyOptions">
+                                <span class="hint">Loading allergies...</span>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="docUpload">Document / photo upload</label>
+                            <input id="docUpload" type="file" accept="image/*,.pdf" multiple />
+                        </div>
+                        <div class="field">
+                            <label for="healthStatus">Health status</label>
+                            <select id="healthStatus" required>
+                                <option value="">Choose status</option>
+                                <option value="stable">Stable</option>
+                                <option value="minor-issue">Minor issue</option>
+                                <option value="needs-attention">Needs attention</option>
+                            </select>
+                        </div>
+                        <div class="field full">
+                            <label for="reason">Reason / notes</label>
+                            <textarea id="reason" placeholder="Describe symptoms or booking notes"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button class="primary" type="submit">Book Appointment</button>
+                        <button class="secondary" type="button" id="prefillButton">Use sample booking</button>
+                    </div>
+                </form>
+
+                <div class="notice hidden" id="bookingNotice"></div>
+            </article>
+
+            <article class="panel">
+                <div class="toolbar">
+                    <div>
+                        <h2>Booking Preview</h2>
+                        <p>Recent appointments added in this demo session.</p>
+                    </div>
+                </div>
+                <div id="bookingList" class="booking-list">
+                    <div class="booking-item">
+                        <div class="booking-head">
+                            <strong>Waiting for your first appointment</strong>
+                            <span class="badge pending">Pending</span>
+                        </div>
+                        <small>Book an appointment to see it here.</small>
+                        <p>The list is populated from the backend after booking.</p>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <aside class="panel">
+            <div class="toolbar">
+                <div>
+                    <h2>Patient Snapshot</h2>
+                    <p>What the backend will eventually store.</p>
+                </div>
+            </div>
+
+            <div class="split">
+                <div class="mini-card">
+                    <h3>Documents</h3>
+                    <p>Photo IDs, lab PDFs, scans, and upload attachments.</p>
+                </div>
+                <div class="mini-card">
+                    <h3>Allergies</h3>
+                    <p>Selectable from a controlled list of allergy options.</p>
+                </div>
+                <div class="mini-card">
+                    <h3>Health status</h3>
+                    <p>Quick triage status such as stable, minor issue, or needs attention.</p>
+                </div>
+                <div class="mini-card">
+                    <h3>Booking flow</h3>
+                    <p>Patient login leads into booking with a chosen doctor service and slot.</p>
+                </div>
+            </div>
+        </aside>
+    </section>
+</main>
+
+<script>
+    const loginForm = document.getElementById('loginForm');
+    const bookingPanel = document.getElementById('bookingPanel');
+    const loginNotice = document.getElementById('loginNotice');
+    const bookingNotice = document.getElementById('bookingNotice');
+    const currentState = document.getElementById('currentState');
+    const bookingList = document.getElementById('bookingList');
+    const fillDemoLogin = document.getElementById('fillDemoLogin');
+    const prefillButton = document.getElementById('prefillButton');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const appointmentDate = document.getElementById('appointmentDate');
+    const doctorSelect = document.getElementById('doctorSelect');
+    const serviceSelect = document.getElementById('serviceSelect');
+    const allergyOptions = document.getElementById('allergyOptions');
+    const bookingForm = document.getElementById('bookingForm');
+
+    const state = {
+        patient: JSON.parse(sessionStorage.getItem('smp-patient') || 'null'),
+        doctors: [],
+        allergies: [],
+        services: []
+    };
+
+    const api = async (url, options = {}) => {
+        const response = await fetch(url, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            },
+            ...options
+        });
+
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || response.statusText);
+        }
+
+        if (response.status === 204) {
+            return null;
+        }
+
+        return response.json();
+    };
+
+    const setNotice = (element, message, error = false) => {
+        element.textContent = message;
+        element.classList.remove('hidden', 'error');
+        if (error) {
+            element.classList.add('error');
+        }
+    };
+
+    const clearNotice = (element) => {
+        element.textContent = '';
+        element.classList.add('hidden');
+        element.classList.remove('error');
+    };
+
+    const showBookingArea = () => {
+        bookingPanel.classList.remove('hidden');
+        currentState.textContent = `Logged in as ${state.patient.email}. Booking form unlocked.`;
+        setNotice(loginNotice, `Welcome ${state.patient.name}. You can now book an appointment.`);
+    };
+
+    const statusClass = (status) => {
+        const normalized = String(status || '').toLowerCase();
+        if (normalized.includes('cancel')) {
+            return 'cancelled';
+        }
+        if (normalized === 'pending') {
+            return 'pending';
+        }
+        return 'confirmed';
+    };
+
+    const renderBookings = async () => {
+        if (!state.patient) {
+            bookingList.innerHTML = `
+                <div class="booking-item">
+                    <div class="booking-head">
+                        <strong>Waiting for your first appointment</strong>
+                        <span class="badge pending">Pending</span>
+                    </div>
+                    <small>Book an appointment to see it here.</small>
+                    <p>The list is populated from the backend after booking.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const appointments = await api('/api/appointments');
+        const patientAppointments = appointments.filter((item) => item.patientId === state.patient.patientId);
+
+        bookingList.innerHTML = '';
+
+        if (!patientAppointments.length) {
+            bookingList.innerHTML = `
+                <div class="booking-item">
+                    <div class="booking-head">
+                        <strong>No bookings yet</strong>
+                        <span class="badge pending">Draft</span>
+                    </div>
+                    <small>Submit the form above to create a booking.</small>
+                </div>
+            `;
+            return;
+        }
+
+        patientAppointments.slice().reverse().forEach((appointment) => {
+            const item = document.createElement('div');
+            item.className = 'booking-item';
+            item.innerHTML = `
+                <div class="booking-head">
+                    <strong>${appointment.serviceName}</strong>
+                    <span class="badge ${statusClass(appointment.status)}">${appointment.status}</span>
+                </div>
+                <small>${appointment.doctorName} · ${new Date(appointment.appointmentTime).toLocaleDateString()} · ${new Date(appointment.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                <p>${appointment.reason || appointment.notes || 'No note added.'}</p>
+            `;
+            bookingList.appendChild(item);
+        });
+    };
+
+    const populateDoctors = () => {
+        doctorSelect.innerHTML = '<option value="">Select doctor</option>';
+        state.doctors.forEach((doctor) => {
+            const option = document.createElement('option');
+            option.value = doctor.id;
+            option.textContent = `${doctor.name} · ${doctor.specialization}`;
+            doctorSelect.appendChild(option);
+        });
+    };
+
+    const populateServices = () => {
+        serviceSelect.innerHTML = '<option value="">Select service</option>';
+        state.services.forEach((service) => {
+            const option = document.createElement('option');
+            option.value = service.id;
+            option.textContent = `${service.name} (${service.durationMinutes} min)`;
+            option.dataset.price = service.price;
+            serviceSelect.appendChild(option);
+        });
+    };
+
+    const populateAllergies = () => {
+        allergyOptions.innerHTML = '';
+        state.allergies.forEach((allergy) => {
+            const label = document.createElement('label');
+            label.className = 'pill';
+            label.innerHTML = `<input type="checkbox" name="allergy" value="${allergy.id}" /> ${allergy.name}`;
+            allergyOptions.appendChild(label);
+        });
+    };
+
+    const loadCatalogs = async () => {
+        const [doctors, allergies] = await Promise.all([
+            api('/api/doctors'),
+            api('/api/allergies')
+        ]);
+
+        state.doctors = doctors;
+        state.allergies = allergies;
+        populateDoctors();
+        populateAllergies();
+    };
+
+    const loadServicesForDoctor = async (doctorId) => {
+        if (!doctorId) {
+            state.services = [];
+            serviceSelect.innerHTML = '<option value="">Select a doctor first</option>';
+            return;
+        }
+
+        state.services = await api(`/api/doctors/${doctorId}/services`);
+        populateServices();
+    };
+
+    const uploadDocuments = async (patientId, files) => {
+        if (!files.length) {
+            return;
+        }
+
+        const formData = new FormData();
+        Array.from(files).forEach((file) => formData.append('files', file));
+        formData.append('description', 'Patient upload from booking page');
+
+        const response = await fetch(`/api/patients/${patientId}/documents`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+    };
+
+    const syncPatientProfile = async (patientId) => {
+        const selectedAllergies = Array.from(document.querySelectorAll('input[name="allergy"]:checked')).map((item) => item.value);
+        const status = document.getElementById('healthStatus').value;
+        const notes = document.getElementById('reason').value.trim();
+
+        await Promise.all([
+            selectedAllergies.length
+                ? api(`/api/patients/${patientId}/allergies`, {
+                    method: 'POST',
+                    body: JSON.stringify(selectedAllergies)
+                })
+                : Promise.resolve(null),
+            status
+                ? api(`/api/patients/${patientId}/health-status`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status, notes })
+                })
+                : Promise.resolve(null),
+            uploadDocuments(patientId, document.getElementById('docUpload').files)
+        ]);
+    };
+
+    fillDemoLogin.addEventListener('click', () => {
+        document.getElementById('loginEmail').value = 'patient@example.com';
+        document.getElementById('loginPassword').value = 'patient123';
+    });
+
+    prefillButton.addEventListener('click', () => {
+        const firstDoctor = state.doctors[0];
+        if (firstDoctor) {
+            doctorSelect.value = firstDoctor.id;
+            loadServicesForDoctor(firstDoctor.id).then(() => {
+                if (state.services[0]) {
+                    serviceSelect.value = state.services[0].id;
+                }
+            });
+        }
+
+        appointmentDate.value = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+        document.getElementById('appointmentTime').value = '09:30';
+        document.getElementById('healthStatus').value = 'stable';
+        document.getElementById('reason').value = 'Routine skin check and review of photos.';
+
+        const pollen = Array.from(document.querySelectorAll('input[name="allergy"]')).find((item) => item.parentElement.textContent.trim() === 'Pollen');
+        if (pollen) {
+            pollen.checked = true;
+        }
+    });
+
+    loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        try {
+            clearNotice(loginNotice);
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            state.patient = await api('/api/patients/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+
+            sessionStorage.setItem('smp-patient', JSON.stringify(state.patient));
+            showBookingArea();
+            await renderBookings();
+            bookingPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (error) {
+            setNotice(loginNotice, error.message || 'Login failed.', true);
+        }
+    });
+
+    doctorSelect.addEventListener('change', async (event) => {
+        try {
+            await loadServicesForDoctor(event.target.value);
+        } catch (error) {
+            setNotice(bookingNotice, error.message || 'Could not load services.', true);
+        }
+    });
+
+    bookingForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        if (!state.patient) {
+            setNotice(bookingNotice, 'Please log in first.', true);
+            return;
+        }
+
+        try {
+            clearNotice(bookingNotice);
+
+            const doctorId = doctorSelect.value;
+            const serviceId = serviceSelect.value;
+            const date = appointmentDate.value;
+            const time = document.getElementById('appointmentTime').value;
+            const status = document.getElementById('healthStatus').value;
+            const reason = document.getElementById('reason').value.trim();
+            const selectedAllergies = Array.from(document.querySelectorAll('input[name="allergy"]:checked')).map((item) => item.parentElement.textContent.trim());
+            const files = Array.from(document.getElementById('docUpload').files).map((file) => file.name);
+
+            if (!doctorId || !serviceId || !date || !time || !status) {
+                setNotice(bookingNotice, 'Please choose doctor, service, date, time, and health status.', true);
+                return;
+            }
+
+            await syncPatientProfile(state.patient.patientId);
+
+            const appointment = await api('/api/appointments', {
+                method: 'POST',
+                body: JSON.stringify({
+                    doctorId,
+                    patientId: state.patient.patientId,
+                    serviceId,
+                    appointmentTime: `${date}T${time}:00`,
+                    status: 'PENDING',
+                    reason,
+                    notes: `Health status: ${status}. Allergies: ${selectedAllergies.join(', ') || 'none'}. Documents: ${files.join(', ') || 'none'}.`
+                })
+            });
+
+            setNotice(
+                bookingNotice,
+                `Appointment booked with ${appointment.doctorName} for ${new Date(appointment.appointmentTime).toLocaleDateString()} at ${new Date(appointment.appointmentTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
+            );
+
+            bookingForm.reset();
+            await renderBookings();
+        } catch (error) {
+            setNotice(bookingNotice, error.message || 'Booking failed.', true);
+        }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('smp-patient');
+        state.patient = null;
+        bookingPanel.classList.add('hidden');
+        currentState.textContent = 'Not logged in yet.';
+        loginForm.reset();
+        clearNotice(loginNotice);
+        clearNotice(bookingNotice);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    (async () => {
+        try {
+            await loadCatalogs();
+
+            if (state.patient) {
+                showBookingArea();
+                await renderBookings();
+            }
+        } catch (error) {
+            setNotice(loginNotice, error.message || 'Could not load backend data.', true);
+        }
+    })();
+</script>
+</body>
+</html>

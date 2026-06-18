@@ -1,8 +1,12 @@
 package com.smp.config;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
+import com.smp.appointment.DoctorAvailabilityDao;
+import com.smp.appointment.DoctorAvailabilityRepository;
 import com.smp.appointment.DoctorServiceDao;
 import com.smp.appointment.DoctorServiceRepository;
 import com.smp.patient.AllergyDao;
@@ -30,6 +34,7 @@ public class DemoDataSeeder {
             PatientRepository patientRepository,
             DoctorRepository doctorRepository,
             DoctorServiceRepository doctorServiceRepository,
+            DoctorAvailabilityRepository doctorAvailabilityRepository,
             AllergyRepository allergyRepository) {
         return args -> {
             User patientUser = userRepository.findByEmail("patient@example.com").orElseGet(() -> {
@@ -80,6 +85,10 @@ public class DemoDataSeeder {
                 followUp.setPrice(new BigDecimal("35.00"));
                 doctorServiceRepository.save(followUp);
 
+                createAvailability(doctorAvailabilityRepository, doctor1, DayOfWeek.MONDAY, "09:00", "13:00", 30);
+                createAvailability(doctorAvailabilityRepository, doctor1, DayOfWeek.WEDNESDAY, "09:00", "13:00", 30);
+                createAvailability(doctorAvailabilityRepository, doctor1, DayOfWeek.FRIDAY, "10:00", "14:00", 30);
+
                 User doctorUser2 = userRepository.findByEmail("karim@example.com").orElseGet(() -> {
                     User user = new User();
                     user.setEmail("karim@example.com");
@@ -102,6 +111,9 @@ public class DemoDataSeeder {
                 consult.setDurationMinutes(30);
                 consult.setPrice(new BigDecimal("49.00"));
                 doctorServiceRepository.save(consult);
+
+                createAvailability(doctorAvailabilityRepository, doctor2, DayOfWeek.TUESDAY, "10:00", "16:00", 30);
+                createAvailability(doctorAvailabilityRepository, doctor2, DayOfWeek.THURSDAY, "10:00", "16:00", 30);
             }
 
             if (allergyRepository.count() == 0) {
@@ -126,5 +138,22 @@ public class DemoDataSeeder {
                 allergyRepository.save(pollen);
             }
         };
+    }
+
+    private void createAvailability(
+            DoctorAvailabilityRepository doctorAvailabilityRepository,
+            DoctorDao doctor,
+            DayOfWeek dayOfWeek,
+            String start,
+            String end,
+            int slotMinutes) {
+        DoctorAvailabilityDao availability = new DoctorAvailabilityDao();
+        availability.setDoctor(doctor);
+        availability.setDayOfWeek(dayOfWeek);
+        availability.setStartTime(LocalTime.parse(start));
+        availability.setEndTime(LocalTime.parse(end));
+        availability.setSlotDurationMinutes(slotMinutes);
+        availability.setActive(true);
+        doctorAvailabilityRepository.save(availability);
     }
 }

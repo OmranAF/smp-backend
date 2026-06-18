@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DoctorRepository extends JpaRepository<DoctorDao, UUID> {
     Optional<DoctorDao> findByUser_Email(String email);
+
+    Optional<DoctorDao> findByUser_EmailAndUser_Password(String email, String password);
 }

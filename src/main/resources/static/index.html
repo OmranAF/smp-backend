@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SMP Patient Demo</title>
+    <title>SMP Doctor and Patient Demo</title>
     <style>
         :root {
             --bg: #07111f;
@@ -340,6 +340,16 @@
             color: var(--danger);
         }
 
+        .cancel-reason-box {
+            margin-top: 10px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .cancel-reason-box textarea {
+            min-height: 82px;
+        }
+
         .notice {
             margin-top: 14px;
             padding: 14px 16px;
@@ -406,11 +416,11 @@
 <main class="page">
     <section class="hero">
         <article class="brand">
-            <span class="eyebrow">SMP Patient Demo</span>
-            <h1>Login, pick a service, and book an appointment.</h1>
+            <span class="eyebrow">SMP Doctor and Patient Demo</span>
+            <h1>Doctors publish free slots, patients book by day.</h1>
             <p class="lead">
-                This is a demo booking flow for patients. It uses real backend endpoints for login, doctors, services,
-                allergies, documents, health status, and appointment booking.
+                Doctors can define weekly free appointment windows. Patients then choose a doctor and day and only see
+                the free slots for that date. The page uses live backend APIs for login, catalogs, availability, and booking.
             </p>
             <div class="stats">
                 <div class="stat">
@@ -447,6 +457,163 @@
 
     <section class="grid">
         <div>
+            <article class="panel" id="doctorPanel">
+                <div class="toolbar">
+                    <div>
+                        <h2>Doctor Portal</h2>
+                        <p>Login and publish your free appointment slots.</p>
+                    </div>
+                    <div class="actions" style="margin-top:0;">
+                        <span class="doctor-chip">Doctor demo: sara@example.com / doctor123</span>
+                        <button class="ghost" type="button" id="doctorLogoutBtn">Doctor logout</button>
+                    </div>
+                </div>
+
+                <form id="doctorLoginForm" class="form-grid">
+                    <div class="field">
+                        <label for="doctorEmail">Doctor email</label>
+                        <input id="doctorEmail" type="email" placeholder="sara@example.com" required />
+                    </div>
+                    <div class="field">
+                        <label for="doctorPassword">Password</label>
+                        <input id="doctorPassword" type="password" placeholder="doctor123" required />
+                    </div>
+                    <div class="actions full">
+                        <button class="primary" type="submit">Login as Doctor</button>
+                        <button class="secondary" type="button" id="fillDoctorDemo">Fill doctor demo</button>
+                    </div>
+                </form>
+
+                <div class="notice hidden" id="doctorNotice"></div>
+
+                <div id="doctorTools" class="hidden">
+                    <form id="doctorAvailabilityForm">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="availabilityDay">Day of week</label>
+                                <select id="availabilityDay" required>
+                                    <option value="MONDAY">Monday</option>
+                                    <option value="TUESDAY">Tuesday</option>
+                                    <option value="WEDNESDAY">Wednesday</option>
+                                    <option value="THURSDAY">Thursday</option>
+                                    <option value="FRIDAY">Friday</option>
+                                    <option value="SATURDAY">Saturday</option>
+                                    <option value="SUNDAY">Sunday</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="availabilityDuration">Slot duration (minutes)</label>
+                                <input id="availabilityDuration" type="number" min="5" max="240" value="30" required />
+                            </div>
+                            <div class="field">
+                                <label for="availabilityStart">Start time</label>
+                                <input id="availabilityStart" type="time" required />
+                            </div>
+                            <div class="field">
+                                <label for="availabilityEnd">End time</label>
+                                <input id="availabilityEnd" type="time" required />
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button class="primary" type="submit">Add free appointment window</button>
+                        </div>
+                    </form>
+
+                    <div class="notice hidden" id="availabilityNotice"></div>
+
+                    <div class="toolbar" style="margin-top:16px;">
+                        <div>
+                            <h3>Your configured windows</h3>
+                            <p class="hint">Patients can book slots generated from these windows.</p>
+                        </div>
+                    </div>
+                    <div id="doctorAvailabilityList" class="booking-list">
+                        <div class="booking-item">
+                            <small>No availability windows yet.</small>
+                        </div>
+                    </div>
+
+                    <form id="editAvailabilityForm" class="form-grid hidden" style="margin-top:14px;">
+                        <div class="field">
+                            <label for="editAvailabilityDay">Edit day of week</label>
+                            <select id="editAvailabilityDay" required>
+                                <option value="MONDAY">Monday</option>
+                                <option value="TUESDAY">Tuesday</option>
+                                <option value="WEDNESDAY">Wednesday</option>
+                                <option value="THURSDAY">Thursday</option>
+                                <option value="FRIDAY">Friday</option>
+                                <option value="SATURDAY">Saturday</option>
+                                <option value="SUNDAY">Sunday</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="editAvailabilityDuration">Edit slot duration (minutes)</label>
+                            <input id="editAvailabilityDuration" type="number" min="5" max="240" required />
+                        </div>
+                        <div class="field">
+                            <label for="editAvailabilityStart">Edit start time</label>
+                            <input id="editAvailabilityStart" type="time" required />
+                        </div>
+                        <div class="field">
+                            <label for="editAvailabilityEnd">Edit end time</label>
+                            <input id="editAvailabilityEnd" type="time" required />
+                        </div>
+                        <label class="pill" style="width: fit-content;">
+                            <input id="editAvailabilityActive" type="checkbox" /> Active
+                        </label>
+                        <div class="actions full">
+                            <button class="primary" type="submit">Save changes</button>
+                            <button class="ghost" type="button" id="cancelEditAvailability">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </article>
+
+            <article class="panel hidden" id="doctorAppointmentsPanel">
+                <div class="toolbar">
+                    <div>
+                        <h2>Patient Appointments</h2>
+                        <p>Today and appointment history.</p>
+                    </div>
+                </div>
+
+                <div class="toolbar" style="margin-top:16px;">
+                    <div>
+                        <h3>Today's Schedule</h3>
+                        <p class="hint">Appointments scheduled for today.</p>
+                    </div>
+                </div>
+                <div id="doctorTodayAppointmentsList" class="booking-list">
+                    <div class="booking-item">
+                        <small>No appointments scheduled for today.</small>
+                    </div>
+                </div>
+
+                <div class="toolbar" style="margin-top:16px;">
+                    <div>
+                        <h3>All Appointment History</h3>
+                        <p class="hint">Complete appointment records.</p>
+                    </div>
+                </div>
+                <div id="doctorAllAppointmentsList" class="booking-list">
+                    <div class="booking-item">
+                        <small>No appointments found.</small>
+                    </div>
+                </div>
+
+                <div class="toolbar" style="margin-top:16px;">
+                    <div>
+                        <h3>Digital Prescriptions</h3>
+                        <p class="hint">Prescriptions created by this doctor.</p>
+                    </div>
+                </div>
+                <div id="doctorPrescriptionList" class="booking-list">
+                    <div class="booking-item">
+                        <small>No prescriptions created yet.</small>
+                    </div>
+                </div>
+            </article>
+
             <article class="panel" id="loginPanel">
                 <div class="toolbar">
                     <div>
@@ -508,15 +675,7 @@
                         <div class="field">
                             <label for="appointmentTime">Time</label>
                             <select id="appointmentTime" required>
-                                <option value="">Choose a slot</option>
-                                <option>09:00</option>
-                                <option>09:30</option>
-                                <option>10:00</option>
-                                <option>10:30</option>
-                                <option>11:00</option>
-                                <option>11:30</option>
-                                <option>12:00</option>
-                                <option>12:30</option>
+                                <option value="">Choose doctor and date first</option>
                             </select>
                         </div>
                         <div class="field full">
@@ -551,6 +710,18 @@
                 </form>
 
                 <div class="notice hidden" id="bookingNotice"></div>
+
+                <div class="toolbar" style="margin-top:16px;">
+                    <div>
+                        <h3>My Digital Prescriptions</h3>
+                        <p class="hint">Your secure prescriptions with QR codes.</p>
+                    </div>
+                </div>
+                <div id="patientPrescriptionList" class="booking-list">
+                    <div class="booking-item">
+                        <small>No prescriptions available yet.</small>
+                    </div>
+                </div>
             </article>
 
             <article class="panel">
@@ -604,12 +775,32 @@
 </main>
 
 <script>
+    const doctorLoginForm = document.getElementById('doctorLoginForm');
+    const doctorAvailabilityForm = document.getElementById('doctorAvailabilityForm');
+    const doctorTools = document.getElementById('doctorTools');
+    const doctorNotice = document.getElementById('doctorNotice');
+    const availabilityNotice = document.getElementById('availabilityNotice');
+    const doctorAvailabilityList = document.getElementById('doctorAvailabilityList');
+    const editAvailabilityForm = document.getElementById('editAvailabilityForm');
+    const editAvailabilityDay = document.getElementById('editAvailabilityDay');
+    const editAvailabilityDuration = document.getElementById('editAvailabilityDuration');
+    const editAvailabilityStart = document.getElementById('editAvailabilityStart');
+    const editAvailabilityEnd = document.getElementById('editAvailabilityEnd');
+    const editAvailabilityActive = document.getElementById('editAvailabilityActive');
+    const cancelEditAvailability = document.getElementById('cancelEditAvailability');
+    const fillDoctorDemo = document.getElementById('fillDoctorDemo');
+    const doctorLogoutBtn = document.getElementById('doctorLogoutBtn');
+    const doctorAppointmentsPanel = document.getElementById('doctorAppointmentsPanel');
+    const doctorTodayAppointmentsList = document.getElementById('doctorTodayAppointmentsList');
+    const doctorAllAppointmentsList = document.getElementById('doctorAllAppointmentsList');
+    const doctorPrescriptionList = document.getElementById('doctorPrescriptionList');
     const loginForm = document.getElementById('loginForm');
     const bookingPanel = document.getElementById('bookingPanel');
     const loginNotice = document.getElementById('loginNotice');
     const bookingNotice = document.getElementById('bookingNotice');
     const currentState = document.getElementById('currentState');
     const bookingList = document.getElementById('bookingList');
+    const patientPrescriptionList = document.getElementById('patientPrescriptionList');
     const fillDemoLogin = document.getElementById('fillDemoLogin');
     const prefillButton = document.getElementById('prefillButton');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -618,12 +809,24 @@
     const serviceSelect = document.getElementById('serviceSelect');
     const allergyOptions = document.getElementById('allergyOptions');
     const bookingForm = document.getElementById('bookingForm');
+    const appointmentTime = document.getElementById('appointmentTime');
 
     const state = {
+        doctor: JSON.parse(sessionStorage.getItem('smp-doctor') || 'null'),
         patient: JSON.parse(sessionStorage.getItem('smp-patient') || 'null'),
         doctors: [],
         allergies: [],
-        services: []
+        services: [],
+        freeSlots: [],
+        patientPrescriptions: [],
+        doctorAppointments: [],
+        doctorPrescriptions: [],
+        doctorAvailabilities: [],
+        editingAvailabilityId: null,
+        cancellingAppointmentId: null,
+        doctorCancellationDrafts: {},
+        prescribingAppointmentId: null,
+        doctorPrescriptionDrafts: {}
     };
 
     const api = async (url, options = {}) => {
@@ -665,6 +868,21 @@
         bookingPanel.classList.remove('hidden');
         currentState.textContent = `Logged in as ${state.patient.email}. Booking form unlocked.`;
         setNotice(loginNotice, `Welcome ${state.patient.name}. You can now book an appointment.`);
+    };
+
+    const showDoctorTools = () => {
+        if (!state.doctor) {
+            doctorTools.classList.add('hidden');
+            clearNotice(availabilityNotice);
+            return;
+        }
+
+        doctorTools.classList.remove('hidden');
+        setNotice(doctorNotice, `Welcome ${state.doctor.name}. You can manage your free appointment windows.`);
+    };
+
+    const setSlotsEmptyState = (message) => {
+        appointmentTime.innerHTML = `<option value="">${message}</option>`;
     };
 
     const statusClass = (status) => {
@@ -726,6 +944,56 @@
         });
     };
 
+    const loadPatientPrescriptions = async () => {
+        if (!state.patient) {
+            state.patientPrescriptions = [];
+            renderPatientPrescriptions([]);
+            return;
+        }
+
+        try {
+            const prescriptions = await api(`/api/patients/${state.patient.patientId}/prescriptions`);
+            state.patientPrescriptions = prescriptions;
+            renderPatientPrescriptions(prescriptions);
+        } catch (error) {
+            console.error('Failed to load patient prescriptions:', error);
+        }
+    };
+
+    const renderPatientPrescriptions = (prescriptions) => {
+        patientPrescriptionList.innerHTML = '';
+
+        if (!prescriptions.length) {
+            patientPrescriptionList.innerHTML = `
+                <div class="booking-item">
+                    <small>No prescriptions available yet.</small>
+                </div>
+            `;
+            return;
+        }
+
+        prescriptions.forEach((prescription) => {
+            const issuedAt = new Date(prescription.issuedAt);
+            const item = document.createElement('div');
+            item.className = 'booking-item';
+            item.innerHTML = `
+                <div class="booking-head">
+                    <strong>${prescription.medicationName}</strong>
+                    <span class="badge confirmed">Issued</span>
+                </div>
+                <small>Doctor: ${prescription.doctorName}</small>
+                <p><strong>Dosage:</strong> ${prescription.dosage}</p>
+                <p><strong>Date:</strong> ${issuedAt.toLocaleDateString()}</p>
+                <p><strong>Instructions:</strong> ${prescription.instructions}</p>
+                <img src="${prescription.qrCodeImageUrl}" alt="Prescription QR code" style="width:180px;height:180px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);margin-top:8px;" />
+                <div class="actions" style="margin-top:10px;">
+                    <a href="${prescription.ticketDetailsUrl}" target="_blank" rel="noopener noreferrer" class="ghost" style="text-decoration:none;display:inline-flex;align-items:center;">Open Prescription Ticket</a>
+                </div>
+            `;
+            patientPrescriptionList.appendChild(item);
+        });
+    };
+
     const populateDoctors = () => {
         doctorSelect.innerHTML = '<option value="">Select doctor</option>';
         state.doctors.forEach((doctor) => {
@@ -744,6 +1012,64 @@
             option.textContent = `${service.name} (${service.durationMinutes} min)`;
             option.dataset.price = service.price;
             serviceSelect.appendChild(option);
+        });
+    };
+
+    const renderAvailabilityRules = (availabilities) => {
+        doctorAvailabilityList.innerHTML = '';
+
+        if (!availabilities.length) {
+            doctorAvailabilityList.innerHTML = `
+                <div class="booking-item">
+                    <small>No availability windows yet.</small>
+                </div>
+            `;
+            return;
+        }
+
+        availabilities.forEach((rule) => {
+            const item = document.createElement('div');
+            item.className = 'booking-item';
+            item.innerHTML = `
+                <div class="booking-head">
+                    <strong>${rule.dayOfWeek}</strong>
+                    <span class="badge confirmed">${rule.slotDurationMinutes} min slots${state.editingAvailabilityId === rule.id ? ' · editing' : ''}</span>
+                </div>
+                <small>${String(rule.startTime).slice(0, 5)} - ${String(rule.endTime).slice(0, 5)} · ${rule.active ? 'Active' : 'Inactive'}</small>
+                <div class="actions" style="margin-top:10px;">
+                    <button class="secondary" type="button" data-action="edit" data-id="${rule.id}">Edit</button>
+                    <button class="ghost" type="button" data-action="delete" data-id="${rule.id}">Delete</button>
+                </div>
+            `;
+            doctorAvailabilityList.appendChild(item);
+        });
+    };
+
+    const closeEditAvailabilityForm = () => {
+        state.editingAvailabilityId = null;
+        editAvailabilityForm.classList.add('hidden');
+        editAvailabilityForm.reset();
+        renderAvailabilityRules(state.doctorAvailabilities);
+    };
+
+    const renderFreeSlots = () => {
+        appointmentTime.innerHTML = '<option value="">Choose a free slot</option>';
+
+        if (!state.freeSlots.length) {
+            setSlotsEmptyState('No free appointments for selected day');
+            return;
+        }
+
+        state.freeSlots.forEach((slot) => {
+            const option = document.createElement('option');
+            const start = new Date(slot.startTime);
+            const end = new Date(slot.endTime);
+            const hh = String(start.getHours()).padStart(2, '0');
+            const mm = String(start.getMinutes()).padStart(2, '0');
+
+            option.value = `${hh}:${mm}`;
+            option.textContent = `${hh}:${mm} - ${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+            appointmentTime.appendChild(option);
         });
     };
 
@@ -773,11 +1099,445 @@
         if (!doctorId) {
             state.services = [];
             serviceSelect.innerHTML = '<option value="">Select a doctor first</option>';
+            state.freeSlots = [];
+            setSlotsEmptyState('Choose doctor and date first');
             return;
         }
 
         state.services = await api(`/api/doctors/${doctorId}/services`);
         populateServices();
+    };
+
+    const loadDoctorAvailabilities = async () => {
+        if (!state.doctor) {
+            state.doctorAvailabilities = [];
+            renderAvailabilityRules([]);
+            closeEditAvailabilityForm();
+            return;
+        }
+
+        const availabilities = await api(`/api/doctors/${state.doctor.doctorId}/availabilities`);
+        state.doctorAvailabilities = availabilities;
+
+        if (state.editingAvailabilityId && !availabilities.some((entry) => entry.id === state.editingAvailabilityId)) {
+            closeEditAvailabilityForm();
+        }
+
+        renderAvailabilityRules(availabilities);
+    };
+
+    const loadDoctorAppointments = async () => {
+        if (!state.doctor) {
+            doctorAppointmentsPanel.classList.add('hidden');
+            state.doctorAppointments = [];
+            return;
+        }
+
+        try {
+            const appointments = await api(`/api/doctors/${state.doctor.doctorId}/appointments`);
+            state.doctorAppointments = appointments;
+            renderDoctorAppointments(appointments);
+            doctorAppointmentsPanel.classList.remove('hidden');
+        } catch (error) {
+            console.error('Failed to load appointments:', error);
+        }
+    };
+
+    const loadDoctorPrescriptions = async () => {
+        if (!state.doctor) {
+            state.doctorPrescriptions = [];
+            renderDoctorPrescriptions([]);
+            return;
+        }
+
+        try {
+            const prescriptions = await api(`/api/doctors/${state.doctor.doctorId}/prescriptions`);
+            state.doctorPrescriptions = prescriptions;
+            renderDoctorPrescriptions(prescriptions);
+        } catch (error) {
+            console.error('Failed to load prescriptions:', error);
+        }
+    };
+
+    const renderDoctorPrescriptions = (prescriptions) => {
+        doctorPrescriptionList.innerHTML = '';
+
+        if (!prescriptions.length) {
+            doctorPrescriptionList.innerHTML = `
+                <div class="booking-item">
+                    <small>No prescriptions created yet.</small>
+                </div>
+            `;
+            return;
+        }
+
+        prescriptions.forEach((prescription) => {
+            const issuedAt = new Date(prescription.issuedAt);
+            const item = document.createElement('div');
+            item.className = 'booking-item';
+            item.innerHTML = `
+                <div class="booking-head">
+                    <strong>${prescription.patientName}</strong>
+                    <span class="badge confirmed">Issued</span>
+                </div>
+                <small>${prescription.medicationName} · ${prescription.dosage}</small>
+                <p><strong>Instructions:</strong> ${prescription.instructions}</p>
+                <p><strong>Issued:</strong> ${issuedAt.toLocaleDateString()} ${issuedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                <p><strong>Valid until:</strong> ${prescription.validUntil || 'Not specified'}</p>
+            `;
+            doctorPrescriptionList.appendChild(item);
+        });
+    };
+
+    const openDoctorCancelFlow = (appointmentId) => {
+        state.cancellingAppointmentId = appointmentId;
+        if (!state.doctorCancellationDrafts[appointmentId]) {
+            state.doctorCancellationDrafts[appointmentId] = '';
+        }
+        renderDoctorAppointments(state.doctorAppointments || []);
+    };
+
+    const openPrescriptionFlow = (appointmentId) => {
+        state.prescribingAppointmentId = appointmentId;
+        if (!state.doctorPrescriptionDrafts[appointmentId]) {
+            state.doctorPrescriptionDrafts[appointmentId] = {
+                medicationName: '',
+                dosage: '',
+                instructions: '',
+                validUntil: ''
+            };
+        }
+        renderDoctorAppointments(state.doctorAppointments || []);
+    };
+
+    const closePrescriptionFlow = () => {
+        state.prescribingAppointmentId = null;
+        renderDoctorAppointments(state.doctorAppointments || []);
+    };
+
+    const closeDoctorCancelFlow = () => {
+        state.cancellingAppointmentId = null;
+        renderDoctorAppointments(state.doctorAppointments || []);
+    };
+
+    const cancelDoctorAppointment = async (appointmentId) => {
+        if (!state.doctor) {
+            setNotice(doctorNotice, 'Please login as doctor first.', true);
+            return;
+        }
+
+        const cancellationReason = (state.doctorCancellationDrafts[appointmentId] || '').trim();
+        if (!cancellationReason) {
+            setNotice(doctorNotice, 'Please provide a cancellation reason.', true);
+            return;
+        }
+
+        try {
+            await api(`/api/doctors/${state.doctor.doctorId}/appointments/${appointmentId}/cancel`, {
+                method: 'POST',
+                body: JSON.stringify({ cancellationReason })
+            });
+
+            delete state.doctorCancellationDrafts[appointmentId];
+            state.cancellingAppointmentId = null;
+            setNotice(doctorNotice, 'Appointment cancelled successfully.');
+            await loadDoctorAppointments();
+        } catch (error) {
+            setNotice(doctorNotice, error.message || 'Could not cancel appointment.', true);
+        }
+    };
+
+    const createDoctorPrescription = async (appointment) => {
+        if (!state.doctor) {
+            setNotice(doctorNotice, 'Please login as doctor first.', true);
+            return;
+        }
+
+        const draft = state.doctorPrescriptionDrafts[appointment.id] || {
+            medicationName: '',
+            dosage: '',
+            instructions: '',
+            validUntil: ''
+        };
+
+        const medicationName = draft.medicationName.trim();
+        const dosage = draft.dosage.trim();
+        const instructions = draft.instructions.trim();
+        const validUntil = draft.validUntil ? draft.validUntil : null;
+
+        if (!medicationName || !dosage || !instructions) {
+            setNotice(doctorNotice, 'Medication name, dosage, and instructions are required.', true);
+            return;
+        }
+
+        try {
+            await api(`/api/doctors/${state.doctor.doctorId}/prescriptions`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    patientId: appointment.patientId,
+                    appointmentId: appointment.id,
+                    medicationName,
+                    dosage,
+                    instructions,
+                    validUntil
+                })
+            });
+
+            delete state.doctorPrescriptionDrafts[appointment.id];
+            state.prescribingAppointmentId = null;
+            setNotice(doctorNotice, `Prescription created for ${appointment.patientName}.`);
+            await loadDoctorPrescriptions();
+        } catch (error) {
+            setNotice(doctorNotice, error.message || 'Could not create prescription.', true);
+        }
+    };
+
+    const renderDoctorAppointments = (appointments) => {
+        if (state.cancellingAppointmentId && !appointments.some((apt) => apt.id === state.cancellingAppointmentId)) {
+            state.cancellingAppointmentId = null;
+        }
+        if (state.prescribingAppointmentId && !appointments.some((apt) => apt.id === state.prescribingAppointmentId)) {
+            state.prescribingAppointmentId = null;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const todayAppointments = appointments.filter((apt) => {
+            const aptDate = new Date(apt.appointmentTime);
+            aptDate.setHours(0, 0, 0, 0);
+            return aptDate.getTime() === today.getTime();
+        });
+
+        renderAppointmentList(doctorTodayAppointmentsList, todayAppointments, true);
+        renderAppointmentList(doctorAllAppointmentsList, appointments, false);
+    };
+
+    const renderAppointmentList = (container, appointments, isTodayOnly) => {
+        container.innerHTML = '';
+
+        if (!appointments.length) {
+            container.innerHTML = `
+                <div class="booking-item">
+                    <small>${isTodayOnly ? 'No appointments scheduled for today.' : 'No appointments found.'}</small>
+                </div>
+            `;
+            return;
+        }
+
+        appointments.forEach((apt) => {
+            const item = document.createElement('div');
+            item.className = 'booking-item';
+            const appointmentTime = new Date(apt.appointmentTime);
+            const timeStr = appointmentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateStr = appointmentTime.toLocaleDateString();
+            const statusClass = apt.status.toLowerCase().includes('cancel') ? 'cancelled' : (apt.status === 'PENDING' ? 'pending' : 'confirmed');
+            const isCancelable = apt.status === 'PENDING' || apt.status === 'CONFIRMED';
+            const isCancelling = state.cancellingAppointmentId === apt.id;
+            const canPrescribe = !String(apt.status || '').toLowerCase().includes('cancel');
+            const isPrescribing = state.prescribingAppointmentId === apt.id;
+
+            item.innerHTML = `
+                <div class="booking-head">
+                    <strong>${apt.patientName}</strong>
+                    <span class="badge ${statusClass}">${apt.status}</span>
+                </div>
+                <small>${apt.serviceName} · ${dateStr} · ${timeStr}</small>
+                <p><strong>Reason:</strong> ${apt.reason || 'Not specified'}</p>
+                ${apt.notes ? `<p><strong>Notes:</strong> ${apt.notes}</p>` : ''}
+            `;
+
+            if (isCancelable) {
+                if (isCancelling) {
+                    const cancelBox = document.createElement('div');
+                    cancelBox.className = 'cancel-reason-box';
+
+                    const reasonInput = document.createElement('textarea');
+                    reasonInput.placeholder = 'Why are you cancelling this appointment?';
+                    reasonInput.value = state.doctorCancellationDrafts[apt.id] || '';
+                    reasonInput.addEventListener('input', (event) => {
+                        state.doctorCancellationDrafts[apt.id] = event.target.value;
+                    });
+
+                    const actionRow = document.createElement('div');
+                    actionRow.className = 'actions';
+                    actionRow.style.marginTop = '0';
+
+                    const confirmBtn = document.createElement('button');
+                    confirmBtn.type = 'button';
+                    confirmBtn.className = 'secondary';
+                    confirmBtn.textContent = 'Confirm Cancel';
+                    confirmBtn.addEventListener('click', async () => {
+                        await cancelDoctorAppointment(apt.id);
+                    });
+
+                    const closeBtn = document.createElement('button');
+                    closeBtn.type = 'button';
+                    closeBtn.className = 'ghost';
+                    closeBtn.textContent = 'Close';
+                    closeBtn.addEventListener('click', () => {
+                        closeDoctorCancelFlow();
+                    });
+
+                    actionRow.appendChild(confirmBtn);
+                    actionRow.appendChild(closeBtn);
+                    cancelBox.appendChild(reasonInput);
+                    cancelBox.appendChild(actionRow);
+                    item.appendChild(cancelBox);
+                } else {
+                    const actionRow = document.createElement('div');
+                    actionRow.className = 'actions';
+                    actionRow.style.marginTop = '10px';
+
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.type = 'button';
+                    cancelBtn.className = 'ghost';
+                    cancelBtn.textContent = 'Cancel Appointment';
+                    cancelBtn.addEventListener('click', () => {
+                        openDoctorCancelFlow(apt.id);
+                    });
+
+                    actionRow.appendChild(cancelBtn);
+
+                    if (canPrescribe) {
+                        const prescribeBtn = document.createElement('button');
+                        prescribeBtn.type = 'button';
+                        prescribeBtn.className = 'secondary';
+                        prescribeBtn.textContent = 'Create Prescription';
+                        prescribeBtn.addEventListener('click', () => {
+                            openPrescriptionFlow(apt.id);
+                        });
+                        actionRow.appendChild(prescribeBtn);
+                    }
+
+                    item.appendChild(actionRow);
+                }
+            }
+
+            if (canPrescribe && isPrescribing) {
+                const draft = state.doctorPrescriptionDrafts[apt.id] || {
+                    medicationName: '',
+                    dosage: '',
+                    instructions: '',
+                    validUntil: ''
+                };
+
+                const formBox = document.createElement('div');
+                formBox.className = 'cancel-reason-box';
+
+                const medInput = document.createElement('input');
+                medInput.type = 'text';
+                medInput.placeholder = 'Medication name';
+                medInput.value = draft.medicationName;
+                medInput.addEventListener('input', (event) => {
+                    state.doctorPrescriptionDrafts[apt.id].medicationName = event.target.value;
+                });
+
+                const dosageInput = document.createElement('input');
+                dosageInput.type = 'text';
+                dosageInput.placeholder = 'Dosage (e.g. 1 tablet twice daily)';
+                dosageInput.value = draft.dosage;
+                dosageInput.addEventListener('input', (event) => {
+                    state.doctorPrescriptionDrafts[apt.id].dosage = event.target.value;
+                });
+
+                const instructionsInput = document.createElement('textarea');
+                instructionsInput.placeholder = 'Prescription instructions';
+                instructionsInput.value = draft.instructions;
+                instructionsInput.addEventListener('input', (event) => {
+                    state.doctorPrescriptionDrafts[apt.id].instructions = event.target.value;
+                });
+
+                const validUntilInput = document.createElement('input');
+                validUntilInput.type = 'date';
+                validUntilInput.value = draft.validUntil;
+                validUntilInput.addEventListener('input', (event) => {
+                    state.doctorPrescriptionDrafts[apt.id].validUntil = event.target.value;
+                });
+
+                const actionRow = document.createElement('div');
+                actionRow.className = 'actions';
+                actionRow.style.marginTop = '0';
+
+                const saveBtn = document.createElement('button');
+                saveBtn.type = 'button';
+                saveBtn.className = 'primary';
+                saveBtn.textContent = 'Save Prescription';
+                saveBtn.addEventListener('click', async () => {
+                    await createDoctorPrescription(apt);
+                });
+
+                const closeBtn = document.createElement('button');
+                closeBtn.type = 'button';
+                closeBtn.className = 'ghost';
+                closeBtn.textContent = 'Close';
+                closeBtn.addEventListener('click', () => {
+                    closePrescriptionFlow();
+                });
+
+                actionRow.appendChild(saveBtn);
+                actionRow.appendChild(closeBtn);
+                formBox.appendChild(medInput);
+                formBox.appendChild(dosageInput);
+                formBox.appendChild(instructionsInput);
+                formBox.appendChild(validUntilInput);
+                formBox.appendChild(actionRow);
+                item.appendChild(formBox);
+            }
+
+            container.appendChild(item);
+        });
+    };
+
+    const openEditAvailabilityFlow = async (availabilityId) => {
+        const rule = state.doctorAvailabilities.find((entry) => entry.id === availabilityId);
+        if (!rule || !state.doctor) {
+            setNotice(availabilityNotice, 'Availability rule not found.', true);
+            return;
+        }
+
+        state.editingAvailabilityId = rule.id;
+        editAvailabilityDay.value = rule.dayOfWeek;
+        editAvailabilityDuration.value = String(rule.slotDurationMinutes);
+        editAvailabilityStart.value = String(rule.startTime).slice(0, 5);
+        editAvailabilityEnd.value = String(rule.endTime).slice(0, 5);
+        editAvailabilityActive.checked = Boolean(rule.active);
+        editAvailabilityForm.classList.remove('hidden');
+        renderAvailabilityRules(state.doctorAvailabilities);
+    };
+
+    const deleteAvailability = async (availabilityId) => {
+        if (!state.doctor) {
+            setNotice(availabilityNotice, 'Please login as doctor first.', true);
+            return;
+        }
+
+        if (!window.confirm('Delete this availability window?')) {
+            return;
+        }
+
+        await api(`/api/doctors/${state.doctor.doctorId}/availabilities/${availabilityId}`, {
+            method: 'DELETE'
+        });
+
+        setNotice(availabilityNotice, 'Availability deleted successfully.');
+        await loadDoctorAvailabilities();
+        await loadFreeSlotsForSelection();
+        await loadDoctorAppointments();
+    };
+
+    const loadFreeSlotsForSelection = async () => {
+        const doctorId = doctorSelect.value;
+        const date = appointmentDate.value;
+
+        if (!doctorId || !date) {
+            state.freeSlots = [];
+            setSlotsEmptyState('Choose doctor and date first');
+            return;
+        }
+
+        state.freeSlots = await api(`/api/doctors/${doctorId}/free-slots?date=${date}`);
+        renderFreeSlots();
     };
 
     const uploadDocuments = async (patientId, files) => {
@@ -821,9 +1581,135 @@
         ]);
     };
 
+    fillDoctorDemo.addEventListener('click', () => {
+        document.getElementById('doctorEmail').value = 'sara@example.com';
+        document.getElementById('doctorPassword').value = 'doctor123';
+    });
+
     fillDemoLogin.addEventListener('click', () => {
         document.getElementById('loginEmail').value = 'patient@example.com';
         document.getElementById('loginPassword').value = 'patient123';
+    });
+
+    doctorLoginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        try {
+            clearNotice(doctorNotice);
+            const email = document.getElementById('doctorEmail').value.trim();
+            const password = document.getElementById('doctorPassword').value.trim();
+
+            state.doctor = await api('/api/doctors/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+
+            sessionStorage.setItem('smp-doctor', JSON.stringify(state.doctor));
+            showDoctorTools();
+            await loadDoctorAvailabilities();
+            await loadDoctorAppointments();
+            await loadDoctorPrescriptions();
+        } catch (error) {
+            setNotice(doctorNotice, error.message || 'Doctor login failed.', true);
+        }
+    });
+
+    doctorAvailabilityForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        if (!state.doctor) {
+            setNotice(availabilityNotice, 'Please login as doctor first.', true);
+            return;
+        }
+
+        try {
+            clearNotice(availabilityNotice);
+            const payload = {
+                dayOfWeek: document.getElementById('availabilityDay').value,
+                startTime: document.getElementById('availabilityStart').value,
+                endTime: document.getElementById('availabilityEnd').value,
+                slotDurationMinutes: Number(document.getElementById('availabilityDuration').value),
+                active: true
+            };
+
+            await api(`/api/doctors/${state.doctor.doctorId}/availabilities`, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            setNotice(availabilityNotice, 'Free appointment window added successfully.');
+            doctorAvailabilityForm.reset();
+            await loadDoctorAvailabilities();
+            await loadCatalogs();
+            await loadFreeSlotsForSelection();
+            await loadDoctorAppointments();
+        } catch (error) {
+            setNotice(availabilityNotice, error.message || 'Could not add availability.', true);
+        }
+    });
+
+    doctorAvailabilityList.addEventListener('click', async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+            return;
+        }
+
+        const action = target.dataset.action;
+        const availabilityId = target.dataset.id;
+
+        if (!action || !availabilityId) {
+            return;
+        }
+
+        try {
+            clearNotice(availabilityNotice);
+            if (action === 'edit') {
+                await openEditAvailabilityFlow(availabilityId);
+            }
+            if (action === 'delete') {
+                await deleteAvailability(availabilityId);
+            }
+        } catch (error) {
+            setNotice(availabilityNotice, error.message || 'Could not update availability.', true);
+        }
+    });
+
+    editAvailabilityForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        if (!state.doctor || !state.editingAvailabilityId) {
+            setNotice(availabilityNotice, 'Select an availability rule to edit first.', true);
+            return;
+        }
+
+        try {
+            clearNotice(availabilityNotice);
+
+            const payload = {
+                dayOfWeek: editAvailabilityDay.value,
+                startTime: editAvailabilityStart.value,
+                endTime: editAvailabilityEnd.value,
+                slotDurationMinutes: Number(editAvailabilityDuration.value),
+                active: editAvailabilityActive.checked
+            };
+
+            await api(`/api/doctors/${state.doctor.doctorId}/availabilities/${state.editingAvailabilityId}`, {
+                method: 'PUT',
+                body: JSON.stringify(payload)
+            });
+
+            setNotice(availabilityNotice, 'Availability updated successfully.');
+            closeEditAvailabilityForm();
+            await loadDoctorAvailabilities();
+            await loadFreeSlotsForSelection();
+            await loadDoctorAppointments();
+        } catch (error) {
+            setNotice(availabilityNotice, error.message || 'Could not update availability.', true);
+        }
+    });
+
+    cancelEditAvailability.addEventListener('click', () => {
+        closeEditAvailabilityForm();
     });
 
     prefillButton.addEventListener('click', () => {
@@ -838,7 +1724,12 @@
         }
 
         appointmentDate.value = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-        document.getElementById('appointmentTime').value = '09:30';
+        loadFreeSlotsForSelection().then(() => {
+            if (state.freeSlots[0]) {
+                const start = new Date(state.freeSlots[0].startTime);
+                document.getElementById('appointmentTime').value = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
+            }
+        });
         document.getElementById('healthStatus').value = 'stable';
         document.getElementById('reason').value = 'Routine skin check and review of photos.';
 
@@ -864,6 +1755,7 @@
             sessionStorage.setItem('smp-patient', JSON.stringify(state.patient));
             showBookingArea();
             await renderBookings();
+            await loadPatientPrescriptions();
             bookingPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (error) {
             setNotice(loginNotice, error.message || 'Login failed.', true);
@@ -873,8 +1765,17 @@
     doctorSelect.addEventListener('change', async (event) => {
         try {
             await loadServicesForDoctor(event.target.value);
+            await loadFreeSlotsForSelection();
         } catch (error) {
             setNotice(bookingNotice, error.message || 'Could not load services.', true);
+        }
+    });
+
+    appointmentDate.addEventListener('change', async () => {
+        try {
+            await loadFreeSlotsForSelection();
+        } catch (error) {
+            setNotice(bookingNotice, error.message || 'Could not load free slots.', true);
         }
     });
 
@@ -924,7 +1825,10 @@
             );
 
             bookingForm.reset();
+            await loadFreeSlotsForSelection();
             await renderBookings();
+            await loadPatientPrescriptions();
+            await loadDoctorAppointments();
         } catch (error) {
             setNotice(bookingNotice, error.message || 'Booking failed.', true);
         }
@@ -933,21 +1837,57 @@
     logoutBtn.addEventListener('click', () => {
         sessionStorage.removeItem('smp-patient');
         state.patient = null;
+        state.patientPrescriptions = [];
         bookingPanel.classList.add('hidden');
         currentState.textContent = 'Not logged in yet.';
         loginForm.reset();
         clearNotice(loginNotice);
         clearNotice(bookingNotice);
+        renderPatientPrescriptions([]);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    doctorLogoutBtn.addEventListener('click', async () => {
+        sessionStorage.removeItem('smp-doctor');
+        state.doctor = null;
+        state.doctorAvailabilities = [];
+        state.doctorAppointments = [];
+        state.doctorPrescriptions = [];
+        state.cancellingAppointmentId = null;
+        state.doctorCancellationDrafts = {};
+        state.prescribingAppointmentId = null;
+        state.doctorPrescriptionDrafts = {};
+        closeEditAvailabilityForm();
+        doctorLoginForm.reset();
+        showDoctorTools();
+        doctorAppointmentsPanel.classList.add('hidden');
+        renderDoctorPrescriptions([]);
+        renderAvailabilityRules([]);
+        setNotice(doctorNotice, 'Doctor logged out.');
+        try {
+            await loadFreeSlotsForSelection();
+        } catch (error) {
+            setNotice(availabilityNotice, error.message || 'Could not refresh free slots.', true);
+        }
     });
 
     (async () => {
         try {
             await loadCatalogs();
+            showDoctorTools();
+
+            if (state.doctor) {
+                await loadDoctorAvailabilities();
+                await loadDoctorAppointments();
+                await loadDoctorPrescriptions();
+            }
+
+            setSlotsEmptyState('Choose doctor and date first');
 
             if (state.patient) {
                 showBookingArea();
                 await renderBookings();
+                await loadPatientPrescriptions();
             }
         } catch (error) {
             setNotice(loginNotice, error.message || 'Could not load backend data.', true);

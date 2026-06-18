@@ -21,6 +21,7 @@ public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final EntityManager entityManager;
+    private final DoctorSlotService doctorSlotService;
 
     @Transactional
     public AppointmentResponseDto createAppointment(AppointmentRequestDto request) {
@@ -59,6 +60,35 @@ public class AppointmentService {
         appointmentRepository.deleteById(id);
     }
 
+    @Transactional
+    public AppointmentResponseDto cancelByDoctor(UUID doctorId, UUID appointmentId, String cancellationReason) {
+        AppointmentDao appointment = appointmentRepository.findByIdAndDoctor_Id(appointmentId, doctorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
+
+        if (appointment.getStatus() == AppointmentStatus.CANCELLED_BY_DOCTOR
+                || appointment.getStatus() == AppointmentStatus.CANCELLED_BY_PATIENT) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment is already cancelled");
+        }
+
+        if (appointment.getStatus() == AppointmentStatus.COMPLETED || appointment.getStatus() == AppointmentStatus.NO_SHOW) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Completed appointments cannot be cancelled");
+        }
+
+        appointment.setStatus(AppointmentStatus.CANCELLED_BY_DOCTOR);
+
+        String trimmedReason = cancellationReason == null ? "" : cancellationReason.trim();
+        if (!trimmedReason.isEmpty()) {
+            String cancellationNote = "Doctor cancellation reason: " + trimmedReason;
+            if (appointment.getNotes() == null || appointment.getNotes().isBlank()) {
+                appointment.setNotes(cancellationNote);
+            } else {
+                appointment.setNotes(appointment.getNotes() + System.lineSeparator() + cancellationNote);
+            }
+        }
+
+        return toResponse(appointmentRepository.save(appointment));
+    }
+
     private void applyRequest(AppointmentDao appointment, AppointmentRequestDto request) {
         DoctorDao doctor = entityManager.find(DoctorDao.class, request.doctorId());
         if (doctor == null) {
@@ -84,6 +114,17 @@ public class AppointmentService {
         appointment.setService(service);
         appointment.setAppointmentTime(request.appointmentTime());
         appointment.setEndTime(request.appointmentTime().plusMinutes(service.getDurationMinutes()));
+
+        boolean slotAvailable = doctorSlotService.isSlotAvailable(
+                doctor.getId(),
+                appointment.getAppointmentTime(),
+                appointment.getEndTime(),
+                appointment.getId());
+
+        if (!slotAvailable) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selected appointment time is not free for this doctor");
+        }
+
         if (request.status() != null) {
             appointment.setStatus(request.status());
         }

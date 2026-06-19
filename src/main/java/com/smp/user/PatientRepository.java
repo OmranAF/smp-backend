@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PatientRepository extends JpaRepository<PatientDao, UUID> {
-    Optional<PatientDao> findByUser_EmailAndUser_Password(String email, String password);
-
     Optional<PatientDao> findByUser_Email(String email);
+
+    Optional<PatientDao> findByUser_Id(UUID userId);
 }

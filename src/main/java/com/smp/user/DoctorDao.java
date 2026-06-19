@@ -39,6 +39,10 @@ public class DoctorDao  {
 
     @Column(nullable = false)
     private String specialization;
+
+    @Column(nullable = false)
+    private boolean active;
+
        @OneToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;

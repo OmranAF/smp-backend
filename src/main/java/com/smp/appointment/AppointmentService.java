@@ -94,6 +94,12 @@ public class AppointmentService {
         if (doctor == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor not found");
         }
+        if (doctor.getUser() == null || !doctor.getUser().isEnabled()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Doctor account is disabled by admin");
+        }
+        if (!doctor.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Doctor account is not active");
+        }
 
         PatientDao patient = entityManager.find(PatientDao.class, request.patientId());
         if (patient == null) {

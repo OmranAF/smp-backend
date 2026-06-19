@@ -18,6 +18,11 @@ public record PatientPrescriptionResponseDto(
         String medicationName,
         String dosage,
         String instructions,
+        String fulfillmentStatus,
+        UUID dispensedByPharmacistId,
+        String dispensedByPharmacistName,
+        LocalDateTime dispensedAt,
+        String dispenseNote,
         LocalDateTime issuedAt,
         LocalDate validUntil) {
 }

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>App Admin Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg-1: #0d1b2a;
+            --bg-2: #1b263b;
+            --panel: rgba(255, 255, 255, 0.08);
+            --line: rgba(255, 255, 255, 0.18);
+            --text: #f2f5ff;
+            --muted: #c3cde0;
+            --ok: #2ec4b6;
+            --danger: #ff8fa3;
+            --warning: #ffd166;
+            --shadow: 0 24px 54px rgba(0, 0, 0, 0.28);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Space Grotesk", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 12% 14%, rgba(46, 196, 182, 0.32), transparent 34%),
+                radial-gradient(circle at 88% 18%, rgba(255, 209, 102, 0.22), transparent 28%),
+                linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 100%);
+        }
+
+        .wrapper {
+            width: min(1080px, calc(100% - 28px));
+            margin: 26px auto 40px;
+        }
+
+        .hero {
+            border: 1px solid var(--line);
+            background: linear-gradient(140deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            margin-bottom: 18px;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(1.8rem, 2.8vw, 2.7rem);
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            margin: 10px 0 0;
+            color: var(--muted);
+            max-width: 70ch;
+            line-height: 1.6;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(8px);
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .summary-card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.18);
+        }
+
+        .summary-card strong {
+            display: block;
+            font-size: 1.4rem;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        input,
+        button,
+        select {
+            font: inherit;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 10px 12px;
+            color: var(--text);
+            background: rgba(0, 0, 0, 0.22);
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 700;
+            transition: transform 0.15s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-main {
+            background: linear-gradient(140deg, #2ec4b6, #7fffd4);
+            color: #07221f;
+            border: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(140deg, #ff8fa3, #ffb3c1);
+            color: #3a0c17;
+            border: none;
+        }
+
+        .status {
+            margin-bottom: 8px;
+            color: var(--muted);
+            min-height: 22px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 1.02rem;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 0.92rem;
+            line-height: 1.4;
+        }
+
+        .tag {
+            display: inline-flex;
+            width: fit-content;
+            padding: 5px 8px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .tag.pending {
+            color: #392d00;
+            background: var(--warning);
+        }
+
+        .tag.active {
+            color: #07382f;
+            background: var(--ok);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 760px) {
+            .wrapper {
+                width: calc(100% - 18px);
+                margin-top: 16px;
+            }
+
+            .hero,
+            .panel {
+                border-radius: 16px;
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="wrapper">
+        <section class="hero">
+            <h1>Global App Admin Desk</h1>
+            <p>
+                Control the whole app from one place: doctors, patients, pharmacists, admins,
+                and any other account role. Enable or disable access globally, and approve doctors separately.
+            </p>
+        </section>
+
+        <section class="layout">
+            <div class="panel">
+                <h2>Account Control</h2>
+                <div class="toolbar">
+                    <input id="adminEmail" type="email" placeholder="admin@example.com" value="admin@example.com" />
+                    <input id="adminPassword" type="password" placeholder="admin password" value="admin123" />
+                    <select id="roleFilter">
+                        <option value="all">All roles</option>
+                        <option value="ADMIN">Admin</option>
+                        <option value="DOCTOR">Doctor</option>
+                        <option value="PATIENT">Patient</option>
+                        <option value="PHARMACIST">Pharmacist</option>
+                        <option value="HOSPITAL">Hospital</option>
+                        <option value="LABOR">Labor</option>
+                        <option value="HealthCenter">HealthCenter</option>
+                    </select>
+                    <select id="stateFilter">
+                        <option value="all">All states</option>
+                        <option value="enabled">Enabled only</option>
+                        <option value="disabled">Disabled only</option>
+                        <option value="pending-doctor">Pending doctors</option>
+                    </select>
+                    <button id="reload" class="btn-main">Reload</button>
+                </div>
+                <div id="summary" class="summary"></div>
+                <div id="status" class="status"></div>
+                <div id="cards" class="cards"></div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const cardsEl = document.getElementById("cards");
+        const summaryEl = document.getElementById("summary");
+        const statusEl = document.getElementById("status");
+        const roleFilterEl = document.getElementById("roleFilter");
+        const stateFilterEl = document.getElementById("stateFilter");
+        const reloadBtn = document.getElementById("reload");
+        const adminEmailEl = document.getElementById("adminEmail");
+        const adminPasswordEl = document.getElementById("adminPassword");
+
+        reloadBtn.addEventListener("click", loadUsers);
+        roleFilterEl.addEventListener("change", loadUsers);
+        stateFilterEl.addEventListener("change", loadUsers);
+
+        function setStatus(text, isError = false) {
+            statusEl.textContent = text;
+            statusEl.style.color = isError ? "var(--danger)" : "var(--muted)";
+        }
+
+        function getRoleQuery() {
+            const value = roleFilterEl.value;
+            return value === "all" ? "" : `?role=${encodeURIComponent(value)}`;
+        }
+
+        function getAuthHeaders() {
+            const email = adminEmailEl.value.trim();
+            const password = adminPasswordEl.value;
+            if (!email || !password) {
+                throw new Error("Enter admin email and password first.");
+            }
+            const basic = btoa(`${email}:${password}`);
+            return { Authorization: `Basic ${basic}` };
+        }
+
+        function applyStateFilter(users) {
+            const stateValue = stateFilterEl.value;
+            if (stateValue === "enabled") {
+                return users.filter((user) => user.enabled);
+            }
+            if (stateValue === "disabled") {
+                return users.filter((user) => !user.enabled);
+            }
+            if (stateValue === "pending-doctor") {
+                return users.filter((user) => user.role === "DOCTOR" && user.doctorApproved === false);
+            }
+            return users;
+        }
+
+        function renderSummary(users) {
+            const counts = {
+                total: users.length,
+                enabled: users.filter((user) => user.enabled).length,
+                disabled: users.filter((user) => !user.enabled).length,
+                doctors: users.filter((user) => user.role === "DOCTOR").length,
+                pharmacists: users.filter((user) => user.role === "PHARMACIST").length,
+                patients: users.filter((user) => user.role === "PATIENT").length
+            };
+
+            summaryEl.innerHTML = `
+                <div class="summary-card"><strong>${counts.total}</strong><span>Total users</span></div>
+                <div class="summary-card"><strong>${counts.enabled}</strong><span>Enabled</span></div>
+                <div class="summary-card"><strong>${counts.disabled}</strong><span>Disabled</span></div>
+                <div class="summary-card"><strong>${counts.doctors}</strong><span>Doctors</span></div>
+                <div class="summary-card"><strong>${counts.pharmacists}</strong><span>Pharmacists</span></div>
+                <div class="summary-card"><strong>${counts.patients}</strong><span>Patients</span></div>
+            `;
+        }
+
+        async function loadUsers() {
+            setStatus("Loading users...");
+            cardsEl.innerHTML = "";
+            try {
+                const response = await fetch(`/api/admin/users${getRoleQuery()}`, {
+                    headers: {
+                        ...getAuthHeaders()
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`Failed loading registrations (${response.status})`);
+                }
+
+                const users = applyStateFilter(await response.json());
+                renderSummary(users);
+
+                if (!Array.isArray(users) || users.length === 0) {
+                    setStatus("No users found for this filter.");
+                    return;
+                }
+
+                setStatus(`Loaded ${users.length} account(s).`);
+                cardsEl.innerHTML = users.map(renderCard).join("");
+
+                document.querySelectorAll("[data-action='enable']").forEach((btn) => {
+                    btn.addEventListener("click", () => updateUser(btn.dataset.id, { enabled: true }, "enabled"));
+                });
+
+                document.querySelectorAll("[data-action='disable']").forEach((btn) => {
+                    btn.addEventListener("click", () => updateUser(btn.dataset.id, { enabled: false }, "disabled"));
+                });
+
+                document.querySelectorAll("[data-action='approve-doctor']").forEach((btn) => {
+                    btn.addEventListener("click", () => updateUser(btn.dataset.id, { doctorApproved: true }, "doctor approved"));
+                });
+
+                document.querySelectorAll("[data-action='set-doctor-pending']").forEach((btn) => {
+                    btn.addEventListener("click", () => updateUser(btn.dataset.id, { doctorApproved: false }, "doctor set to pending"));
+                });
+            } catch (error) {
+                setStatus(error.message, true);
+            }
+        }
+
+        function renderCard(user) {
+            const registered = user.createdAt
+                ? new Date(user.createdAt).toLocaleString()
+                : "n/a";
+            const enabledLabel = user.enabled ? "Enabled" : "Disabled";
+            const enabledClass = user.enabled ? "active" : "pending";
+            const doctorApproval = user.role === "DOCTOR"
+                ? `<div class="meta">Doctor approval: ${user.doctorApproved ? "Approved" : "Pending"}</div>`
+                : "";
+            const specialization = user.specialization ? `<div class="meta">${escapeHtml(user.specialization)}</div>` : "";
+            const address = user.address ? `<div class="meta">${escapeHtml(user.address)}</div>` : "";
+            const doctorActions = user.role === "DOCTOR"
+                ? (user.doctorApproved
+                    ? `<button class="btn-danger" data-action="set-doctor-pending" data-id="${user.userId}">Set Pending</button>`
+                    : `<button class="btn-main" data-action="approve-doctor" data-id="${user.userId}">Approve Doctor</button>`)
+                : "";
+
+            return `
+                <article class="card">
+                    <span class="tag ${enabledClass}">${enabledLabel}</span>
+                    <h3>${escapeHtml(user.name || user.role || "Unnamed")}</h3>
+                    <div class="meta">Role: ${escapeHtml(user.role || "UNKNOWN")}</div>
+                    ${specialization}
+                    ${address}
+                    <div class="meta">${escapeHtml(user.email || "No email")}</div>
+                    ${doctorApproval}
+                    <div class="meta">Registered: ${escapeHtml(registered)}</div>
+                    <div class="actions">
+                        ${user.enabled
+                            ? `<button class="btn-danger" data-action="disable" data-id="${user.userId}">Disable Account</button>`
+                            : `<button class="btn-main" data-action="enable" data-id="${user.userId}">Enable Account</button>`}
+                        ${doctorActions}
+                    </div>
+                </article>
+            `;
+        }
+
+        async function updateUser(userId, payload, successLabel) {
+            setStatus(`Updating account...`);
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Update failed (${response.status})`);
+                }
+
+                setStatus(`Account ${successLabel} successfully.`);
+                await loadUsers();
+            } catch (error) {
+                setStatus(error.message, true);
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        loadUsers();
+    </script>
+</body>
+</html>

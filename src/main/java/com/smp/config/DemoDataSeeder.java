@@ -3,8 +3,12 @@ package com.smp.config;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import com.smp.appointment.AppointmentDao;
+import com.smp.appointment.AppointmentRepository;
+import com.smp.appointment.AppointmentStatus;
 import com.smp.appointment.DoctorAvailabilityDao;
 import com.smp.appointment.DoctorAvailabilityRepository;
 import com.smp.appointment.DoctorServiceDao;
@@ -23,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @RequiredArgsConstructor
@@ -33,15 +38,27 @@ public class DemoDataSeeder {
             UserRepository userRepository,
             PatientRepository patientRepository,
             DoctorRepository doctorRepository,
+            AppointmentRepository appointmentRepository,
             DoctorServiceRepository doctorServiceRepository,
             DoctorAvailabilityRepository doctorAvailabilityRepository,
-            AllergyRepository allergyRepository) {
+            AllergyRepository allergyRepository,
+            PasswordEncoder passwordEncoder) {
         return args -> {
+            userRepository.findByEmail("admin@example.com").orElseGet(() -> {
+                User admin = new User();
+                admin.setEmail("admin@example.com");
+                admin.setPassword(passwordEncoder.encode("admin123"));
+                admin.setRole(Role.ADMIN);
+                admin.setEnabled(true);
+                return userRepository.save(admin);
+            });
+
             User patientUser = userRepository.findByEmail("patient@example.com").orElseGet(() -> {
                 User user = new User();
                 user.setEmail("patient@example.com");
-                user.setPassword("patient123");
+                user.setPassword(passwordEncoder.encode("patient123"));
                 user.setRole(Role.PATIENT);
+                user.setEnabled(true);
                 return userRepository.save(user);
             });
 
@@ -57,8 +74,9 @@ public class DemoDataSeeder {
                 User doctorUser1 = userRepository.findByEmail("sara@example.com").orElseGet(() -> {
                     User user = new User();
                     user.setEmail("sara@example.com");
-                    user.setPassword("doctor123");
+                    user.setPassword(passwordEncoder.encode("doctor123"));
                     user.setRole(Role.DOCTOR);
+                    user.setEnabled(true);
                     return userRepository.save(user);
                 });
 
@@ -66,6 +84,7 @@ public class DemoDataSeeder {
                 doctor1.setName("Dr. Sara Ali");
                 doctor1.setAddress("Clinic Street 12");
                 doctor1.setSpecialization("Dermatology");
+                doctor1.setActive(true);
                 doctor1.setUser(doctorUser1);
                 doctor1 = doctorRepository.save(doctor1);
 
@@ -92,8 +111,9 @@ public class DemoDataSeeder {
                 User doctorUser2 = userRepository.findByEmail("karim@example.com").orElseGet(() -> {
                     User user = new User();
                     user.setEmail("karim@example.com");
-                    user.setPassword("doctor123");
+                    user.setPassword(passwordEncoder.encode("doctor123"));
                     user.setRole(Role.DOCTOR);
+                    user.setEnabled(true);
                     return userRepository.save(user);
                 });
 
@@ -101,6 +121,7 @@ public class DemoDataSeeder {
                 doctor2.setName("Dr. Karim Hassan");
                 doctor2.setAddress("Health Center Road 7");
                 doctor2.setSpecialization("General Medicine");
+                doctor2.setActive(true);
                 doctor2.setUser(doctorUser2);
                 doctor2 = doctorRepository.save(doctor2);
 
@@ -114,6 +135,28 @@ public class DemoDataSeeder {
 
                 createAvailability(doctorAvailabilityRepository, doctor2, DayOfWeek.TUESDAY, "10:00", "16:00", 30);
                 createAvailability(doctorAvailabilityRepository, doctor2, DayOfWeek.THURSDAY, "10:00", "16:00", 30);
+            }
+
+            PatientDao demoPatient = patientRepository.findByUser_Email("patient@example.com").orElse(null);
+            DoctorDao demoDoctor = doctorRepository.findByUser_Email("sara@example.com").orElse(null);
+
+            if (demoPatient != null
+                    && demoDoctor != null
+                    && !appointmentRepository.existsByDoctor_IdAndPatient_Id(demoDoctor.getId(), demoPatient.getId())) {
+                java.util.List<DoctorServiceDao> services = doctorServiceRepository.findByDoctor_Id(demoDoctor.getId());
+                if (!services.isEmpty()) {
+                    DoctorServiceDao service = services.get(0);
+
+                    AppointmentDao appointment = new AppointmentDao();
+                    appointment.setDoctor(demoDoctor);
+                    appointment.setPatient(demoPatient);
+                    appointment.setService(service);
+                    appointment.setAppointmentTime(LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0));
+                    appointment.setEndTime(appointment.getAppointmentTime().plusMinutes(service.getDurationMinutes()));
+                    appointment.setStatus(AppointmentStatus.CONFIRMED);
+                    appointment.setReason("Seeded demo relationship for doctor-patient chat");
+                    appointmentRepository.save(appointment);
+                }
             }
 
             if (allergyRepository.count() == 0) {

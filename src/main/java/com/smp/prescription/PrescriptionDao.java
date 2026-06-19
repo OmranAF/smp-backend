@@ -6,10 +6,13 @@ import java.util.UUID;
 
 import com.smp.appointment.AppointmentDao;
 import com.smp.user.DoctorDao;
+import com.smp.user.PharmacistDao;
 import com.smp.user.PatientDao;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -59,6 +62,19 @@ public class PrescriptionDao {
     @Column(nullable = false, length = 200)
     private String accessToken;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PrescriptionFulfillmentStatus fulfillmentStatus;
+
+    @ManyToOne
+    @JoinColumn(name = "dispensed_by_pharmacist_id")
+    private PharmacistDao dispensedByPharmacist;
+
+    private LocalDateTime dispensedAt;
+
+    @Column(length = 500)
+    private String dispenseNote;
+
     @Column(nullable = false)
     private LocalDateTime issuedAt;
 
@@ -74,6 +90,9 @@ public class PrescriptionDao {
         }
         if (accessToken == null || accessToken.isBlank()) {
             accessToken = UUID.randomUUID().toString();
+        }
+        if (fulfillmentStatus == null) {
+            fulfillmentStatus = PrescriptionFulfillmentStatus.PENDING;
         }
     }
 }

@@ -16,6 +16,7 @@ public record DoctorPrescriptionResponseDto(
         String medicationName,
         String dosage,
         String instructions,
+        String fulfillmentStatus,
         LocalDateTime issuedAt,
         LocalDate validUntil) {
 }

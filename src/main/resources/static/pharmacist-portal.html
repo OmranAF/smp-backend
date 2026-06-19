@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pharmacist Portal</title>
+    <style>
+        :root {
+            --bg: #f3f7fb;
+            --card: #ffffff;
+            --line: #d6e3ef;
+            --text: #1d2b39;
+            --muted: #5d7185;
+            --main: #168aad;
+            --ok: #2a9d8f;
+            --danger: #d90429;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: radial-gradient(circle at top right, #d9f2ff, transparent 40%), var(--bg);
+            color: var(--text);
+        }
+
+        .wrap {
+            width: min(1000px, calc(100% - 24px));
+            margin: 20px auto 32px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        h1, h2 { margin-top: 0; }
+
+        .grid {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .full { grid-column: 1 / -1; }
+
+        label { display: block; color: var(--muted); margin-bottom: 4px; }
+
+        input, select, textarea, button {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px;
+            font: inherit;
+        }
+
+        textarea { min-height: 80px; resize: vertical; }
+
+        button {
+            cursor: pointer;
+            border: none;
+            background: var(--main);
+            color: #fff;
+            font-weight: 700;
+        }
+
+        button.secondary {
+            background: #607d8b;
+        }
+
+        .note { margin-top: 8px; color: var(--muted); min-height: 20px; }
+        .note.error { color: var(--danger); }
+
+        .row-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .row-actions button { width: auto; }
+
+        .list { display: grid; gap: 8px; margin-top: 10px; }
+
+        .item {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .tag {
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.84rem;
+            color: #fff;
+            background: var(--ok);
+        }
+
+        .tag.pending { background: #e9c46a; color: #3f3200; }
+
+        @media (max-width: 780px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<main class="wrap">
+    <section class="card">
+        <h1>Pharmacist Services</h1>
+        <p>Register/login, manage opening hours, and process prescription QR tickets.</p>
+    </section>
+
+    <section class="card">
+        <h2>Register / Login</h2>
+        <div class="grid">
+            <div>
+                <label for="name">Name</label>
+                <input id="name" placeholder="Pharmacist name" />
+            </div>
+            <div>
+                <label for="address">Address</label>
+                <input id="address" placeholder="Pharmacy address" />
+            </div>
+            <div>
+                <label for="email">Email</label>
+                <input id="email" type="email" placeholder="pharmacist@example.com" />
+            </div>
+            <div>
+                <label for="password">Password</label>
+                <input id="password" type="password" placeholder="Password" />
+            </div>
+            <div class="full row-actions">
+                <button id="registerBtn" type="button">Register Pharmacist</button>
+                <button id="loginBtn" type="button" class="secondary">Login</button>
+            </div>
+        </div>
+        <div id="authNote" class="note"></div>
+    </section>
+
+    <section class="card" id="hoursCard" style="display:none;">
+        <h2>Opening Hours</h2>
+        <div class="grid">
+            <div>
+                <label for="day">Day</label>
+                <select id="day">
+                    <option>MONDAY</option><option>TUESDAY</option><option>WEDNESDAY</option>
+                    <option>THURSDAY</option><option>FRIDAY</option><option>SATURDAY</option><option>SUNDAY</option>
+                </select>
+            </div>
+            <div>
+                <label for="active">Active</label>
+                <select id="active"><option value="true">Yes</option><option value="false">No</option></select>
+            </div>
+            <div>
+                <label for="startTime">Start</label>
+                <input id="startTime" type="time" />
+            </div>
+            <div>
+                <label for="endTime">End</label>
+                <input id="endTime" type="time" />
+            </div>
+            <div class="full row-actions">
+                <button id="addHoursBtn" type="button">Add Opening Hours</button>
+                <button id="refreshHoursBtn" type="button" class="secondary">Refresh</button>
+            </div>
+        </div>
+        <div id="hoursNote" class="note"></div>
+        <div id="hoursList" class="list"></div>
+    </section>
+
+    <section class="card" id="dispenseCard" style="display:none;">
+        <h2>Process Prescription QR</h2>
+        <div class="grid">
+            <div class="full">
+                <label for="qrPayload">Full QR text</label>
+                <textarea id="qrPayload" placeholder="Paste the full scanned QR text here"></textarea>
+            </div>
+            <div class="full row-actions">
+                <button id="parseQrBtn" type="button" class="secondary">Parse QR Text</button>
+            </div>
+            <div>
+                <label for="ticketId">Ticket ID</label>
+                <input id="ticketId" placeholder="UUID from QR URL" />
+            </div>
+            <div>
+                <label for="ticketToken">Token</label>
+                <input id="ticketToken" placeholder="Token from QR URL" />
+            </div>
+            <div>
+                <label for="dispenseStatus">Status</label>
+                <select id="dispenseStatus">
+                    <option value="APPROVED">APPROVED</option>
+                    <option value="FINISHED">FINISHED</option>
+                </select>
+            </div>
+            <div class="full">
+                <label for="dispenseNote">Note (optional)</label>
+                <textarea id="dispenseNote" placeholder="Example: dispensed to patient"></textarea>
+            </div>
+            <div class="full row-actions">
+                <button id="dispenseBtn" type="button">Dispense by QR</button>
+            </div>
+        </div>
+        <div id="dispenseResult" class="note"></div>
+        <div id="qrPreview" class="note"></div>
+        <div id="dispenseData" class="list"></div>
+    </section>
+</main>
+
+<script>
+    let pharmacist = null;
+    let pharmacistAuthToken = null;
+
+    async function api(url, options = {}) {
+        const requestHeaders = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        if (options.requiresAuth) {
+            if (!pharmacistAuthToken) {
+                throw new Error('Please login first.');
+            }
+            requestHeaders.Authorization = `Basic ${pharmacistAuthToken}`;
+        }
+
+        const response = await fetch(url, {
+            headers: requestHeaders,
+            ...options
+        });
+        const text = await response.text();
+        if (!response.ok) {
+            throw new Error(text || response.statusText);
+        }
+        return text ? JSON.parse(text) : null;
+    }
+
+    function setNote(el, msg, error = false) {
+        el.textContent = msg;
+        el.className = error ? 'note error' : 'note';
+    }
+
+    function pharmacistUrl(path) {
+        return `/api/pharmacists/${pharmacist.pharmacistId}${path}`;
+    }
+
+    function parseQrPayload() {
+        const raw = document.getElementById('qrPayload').value.trim();
+        if (!raw) {
+            setNote(document.getElementById('qrPreview'), 'Paste QR text first.', true);
+            return null;
+        }
+
+        const lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        const values = new Map();
+
+        lines.forEach((line) => {
+            const separatorIndex = line.indexOf(':');
+            if (separatorIndex <= 0) {
+                return;
+            }
+            const key = line.slice(0, separatorIndex).trim();
+            const value = line.slice(separatorIndex + 1).trim();
+            values.set(key, value);
+        });
+
+        let ticketUrl = values.get('Ticket URL') || '';
+        let ticketId = values.get('Ticket ID') || '';
+        let token = values.get('Token') || '';
+
+        if (ticketUrl) {
+            try {
+                const url = new URL(ticketUrl, window.location.origin);
+                const pathParts = url.pathname.split('/').filter(Boolean);
+                ticketId = ticketId || pathParts[pathParts.length - 1] || '';
+                token = token || url.searchParams.get('token') || '';
+            } catch (error) {
+                // Ignore invalid URL and continue with explicit values from QR text.
+            }
+        }
+
+        if (!ticketId || !token) {
+            setNote(document.getElementById('qrPreview'), 'Could not find Ticket ID and Token in QR text.', true);
+            return null;
+        }
+
+        document.getElementById('ticketId').value = ticketId;
+        document.getElementById('ticketToken').value = token;
+
+        const doctorName = values.get('Doctor') || 'Unknown doctor';
+        const patientName = values.get('Patient') || 'Unknown patient';
+        const medicationName = values.get('Medication') || 'Unknown medication';
+        const status = values.get('Status') || 'Unknown status';
+
+        setNote(
+            document.getElementById('qrPreview'),
+            `Doctor: ${doctorName} | Patient: ${patientName} | Medication: ${medicationName} | Status: ${status}`
+        );
+
+        return { ticketId, token, doctorName, patientName, medicationName, status };
+    }
+
+    async function register() {
+        const payload = {
+            name: document.getElementById('name').value,
+            address: document.getElementById('address').value,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        };
+        try {
+            const data = await api('/api/pharmacists/register', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            setNote(document.getElementById('authNote'), `Registered: ${data.name}`);
+        } catch (error) {
+            setNote(document.getElementById('authNote'), error.message, true);
+        }
+    }
+
+    async function login() {
+        const email = document.getElementById('email').value.trim().toLowerCase();
+        const password = document.getElementById('password').value;
+        const payload = {
+            email,
+            password
+        };
+        try {
+            pharmacist = await api('/api/pharmacists/login', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            pharmacistAuthToken = btoa(`${email}:${password}`);
+            document.getElementById('hoursCard').style.display = '';
+            document.getElementById('dispenseCard').style.display = '';
+            setNote(document.getElementById('authNote'), `Logged in: ${pharmacist.name}`);
+            await loadHours();
+        } catch (error) {
+            setNote(document.getElementById('authNote'), error.message, true);
+        }
+    }
+
+    async function loadHours() {
+        if (!pharmacist) return;
+        try {
+            const rows = await api(pharmacistUrl('/opening-hours'), { requiresAuth: true });
+            const list = document.getElementById('hoursList');
+            list.innerHTML = '';
+            if (!rows.length) {
+                list.innerHTML = '<div class="item"><span>No opening hours added yet.</span></div>';
+                return;
+            }
+
+            rows.forEach((row) => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `
+                    <div>
+                        <strong>${row.dayOfWeek}</strong> ${row.startTime} - ${row.endTime}
+                        <div><span class="tag ${row.active ? '' : 'pending'}">${row.active ? 'ACTIVE' : 'INACTIVE'}</span></div>
+                    </div>
+                    <div class="row-actions">
+                        <button data-id="${row.id}" data-action="delete" class="secondary" type="button">Delete</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+
+            list.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
+                btn.addEventListener('click', () => removeHours(btn.dataset.id));
+            });
+        } catch (error) {
+            setNote(document.getElementById('hoursNote'), error.message, true);
+        }
+    }
+
+    async function addHours() {
+        if (!pharmacist) return;
+        const payload = {
+            dayOfWeek: document.getElementById('day').value,
+            startTime: document.getElementById('startTime').value,
+            endTime: document.getElementById('endTime').value,
+            active: document.getElementById('active').value === 'true'
+        };
+
+        try {
+            await api(pharmacistUrl('/opening-hours'), {
+                method: 'POST',
+                requiresAuth: true,
+                body: JSON.stringify(payload)
+            });
+            setNote(document.getElementById('hoursNote'), 'Opening hours added.');
+            await loadHours();
+        } catch (error) {
+            setNote(document.getElementById('hoursNote'), error.message, true);
+        }
+    }
+
+    async function removeHours(id) {
+        if (!pharmacist) return;
+        try {
+            await api(pharmacistUrl(`/opening-hours/${id}`), { method: 'DELETE', requiresAuth: true });
+            setNote(document.getElementById('hoursNote'), 'Opening hours deleted.');
+            await loadHours();
+        } catch (error) {
+            setNote(document.getElementById('hoursNote'), error.message, true);
+        }
+    }
+
+    async function dispense() {
+        if (!pharmacist) return;
+
+        const payload = {
+            ticketId: document.getElementById('ticketId').value,
+            token: document.getElementById('ticketToken').value,
+            status: document.getElementById('dispenseStatus').value,
+            note: document.getElementById('dispenseNote').value
+        };
+
+        try {
+            const result = await api(pharmacistUrl('/prescriptions/dispense'), {
+                method: 'POST',
+                requiresAuth: true,
+                body: JSON.stringify(payload)
+            });
+
+            setNote(document.getElementById('dispenseResult'), `Prescription marked as ${result.fulfillmentStatus}. QR token consumed.`);
+            document.getElementById('dispenseData').innerHTML = `
+                <div class="item">
+                    <div>
+                        <strong>${result.medicationName}</strong>
+                        <div>Patient: ${result.patientName}</div>
+                        <div>Status: ${result.fulfillmentStatus}</div>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            setNote(document.getElementById('dispenseResult'), error.message, true);
+        }
+    }
+
+    document.getElementById('registerBtn').addEventListener('click', register);
+    document.getElementById('loginBtn').addEventListener('click', login);
+    document.getElementById('addHoursBtn').addEventListener('click', addHours);
+    document.getElementById('refreshHoursBtn').addEventListener('click', loadHours);
+    document.getElementById('parseQrBtn').addEventListener('click', parseQrPayload);
+    document.getElementById('dispenseBtn').addEventListener('click', dispense);
+</script>
+</body>
+</html>

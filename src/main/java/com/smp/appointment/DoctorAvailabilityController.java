@@ -34,8 +34,7 @@ public class DoctorAvailabilityController {
     public DoctorAvailabilityResponseDto createAvailability(
             @PathVariable UUID doctorId,
             @Valid @RequestBody DoctorAvailabilityRequestDto request) {
-        DoctorDao doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor not found"));
+        DoctorDao doctor = requireActiveDoctor(doctorId);
 
         if (!request.startTime().isBefore(request.endTime())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Start time must be before end time");
@@ -54,9 +53,7 @@ public class DoctorAvailabilityController {
 
     @GetMapping("/availabilities")
     public List<DoctorAvailabilityResponseDto> getDoctorAvailabilities(@PathVariable UUID doctorId) {
-        if (!doctorRepository.existsById(doctorId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor not found");
-        }
+        requireActiveDoctor(doctorId);
 
         return doctorAvailabilityRepository.findByDoctor_Id(doctorId).stream()
                 .sorted(Comparator
@@ -71,6 +68,8 @@ public class DoctorAvailabilityController {
             @PathVariable UUID doctorId,
             @PathVariable UUID availabilityId,
             @Valid @RequestBody DoctorAvailabilityRequestDto request) {
+        requireActiveDoctor(doctorId);
+
         if (!request.startTime().isBefore(request.endTime())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Start time must be before end time");
         }
@@ -91,9 +90,23 @@ public class DoctorAvailabilityController {
     public void deleteAvailability(
             @PathVariable UUID doctorId,
             @PathVariable UUID availabilityId) {
+        requireActiveDoctor(doctorId);
+
         DoctorAvailabilityDao availability = doctorAvailabilityRepository.findByIdAndDoctor_Id(availabilityId, doctorId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Availability not found"));
         doctorAvailabilityRepository.delete(availability);
+    }
+
+    private DoctorDao requireActiveDoctor(UUID doctorId) {
+        DoctorDao doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor not found"));
+        if (doctor.getUser() == null || !doctor.getUser().isEnabled()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Doctor account is disabled by admin");
+        }
+        if (!doctor.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Doctor account is waiting for admin activation");
+        }
+        return doctor;
     }
 
     private DoctorAvailabilityResponseDto toResponse(DoctorAvailabilityDao availability) {

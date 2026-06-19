@@ -974,20 +974,36 @@
 
         prescriptions.forEach((prescription) => {
             const issuedAt = new Date(prescription.issuedAt);
+            const marker = prescription.fulfillmentStatus || 'PENDING';
+            const markerClass = marker === 'PENDING' ? 'pending' : 'confirmed';
+            const qrMarkup = prescription.qrCodeImageUrl
+                ? `<img src="${prescription.qrCodeImageUrl}" alt="Prescription QR code" style="width:180px;height:180px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);margin-top:8px;" />`
+                : '<p><strong>QR:</strong> Already used at pharmacy.</p>';
+            const detailsMarkup = prescription.ticketDetailsUrl
+                ? `<a href="${prescription.ticketDetailsUrl}" target="_blank" rel="noopener noreferrer" class="ghost" style="text-decoration:none;display:inline-flex;align-items:center;">Open Prescription Ticket</a>`
+                : '<span class="hint">Ticket closed after pharmacy processing.</span>';
+            const pharmacistMarkup = prescription.dispensedByPharmacistName
+                ? `<p><strong>Pharmacy:</strong> ${prescription.dispensedByPharmacistName}</p>`
+                : '';
+            const dispenseNoteMarkup = prescription.dispenseNote
+                ? `<p><strong>Pharmacy Note:</strong> ${prescription.dispenseNote}</p>`
+                : '';
             const item = document.createElement('div');
             item.className = 'booking-item';
             item.innerHTML = `
                 <div class="booking-head">
                     <strong>${prescription.medicationName}</strong>
-                    <span class="badge confirmed">Issued</span>
+                    <span class="badge ${markerClass}">${marker}</span>
                 </div>
                 <small>Doctor: ${prescription.doctorName}</small>
                 <p><strong>Dosage:</strong> ${prescription.dosage}</p>
                 <p><strong>Date:</strong> ${issuedAt.toLocaleDateString()}</p>
                 <p><strong>Instructions:</strong> ${prescription.instructions}</p>
-                <img src="${prescription.qrCodeImageUrl}" alt="Prescription QR code" style="width:180px;height:180px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);margin-top:8px;" />
+                ${pharmacistMarkup}
+                ${dispenseNoteMarkup}
+                ${qrMarkup}
                 <div class="actions" style="margin-top:10px;">
-                    <a href="${prescription.ticketDetailsUrl}" target="_blank" rel="noopener noreferrer" class="ghost" style="text-decoration:none;display:inline-flex;align-items:center;">Open Prescription Ticket</a>
+                    ${detailsMarkup}
                 </div>
             `;
             patientPrescriptionList.appendChild(item);

@@ -10,8 +10,11 @@ import com.smp.appointment.AppointmentRepository;
 import com.smp.prescription.dto.DoctorPrescriptionRequestDto;
 import com.smp.user.DoctorDao;
 import com.smp.user.DoctorRepository;
+import com.smp.user.PharmacistRepository;
 import com.smp.user.PatientDao;
 import com.smp.user.PatientRepository;
+import com.smp.user.Role;
+import com.smp.user.User;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +40,9 @@ class PrescriptionServiceTest {
     private PatientRepository patientRepository;
 
     @Mock
+    private PharmacistRepository pharmacistRepository;
+
+    @Mock
     private AppointmentRepository appointmentRepository;
 
     private PrescriptionService prescriptionService;
@@ -45,6 +52,7 @@ class PrescriptionServiceTest {
         prescriptionService = new PrescriptionService(
                 prescriptionRepository,
                 doctorRepository,
+            pharmacistRepository,
                 patientRepository,
                 appointmentRepository);
     }
@@ -58,6 +66,13 @@ class PrescriptionServiceTest {
         DoctorDao doctor = new DoctorDao();
         doctor.setId(doctorId);
         doctor.setName("Dr. Sara Ali");
+        doctor.setActive(true);
+        doctor.setUser(User.builder()
+            .email("doctor@test.local")
+            .password("hashed")
+            .role(Role.DOCTOR)
+            .enabled(true)
+            .build());
 
         PatientDao patient = new PatientDao();
         patient.setId(patientId);
@@ -99,5 +114,32 @@ class PrescriptionServiceTest {
         assertEquals("Take after meals for 5 days", response.instructions());
         assertEquals(LocalDate.of(2026, 7, 1), response.validUntil());
         verify(prescriptionRepository).save(org.mockito.ArgumentMatchers.any(PrescriptionDao.class));
+    }
+
+    @Test
+    void shouldIncludeDoctorNameInQrPayload() {
+        UUID ticketId = UUID.randomUUID();
+
+        DoctorDao doctor = new DoctorDao();
+        doctor.setName("Dr. Sara Ali");
+
+        PatientDao patient = new PatientDao();
+        patient.setName("Demo Patient");
+
+        PrescriptionDao prescription = new PrescriptionDao();
+        prescription.setDoctor(doctor);
+        prescription.setPatient(patient);
+        prescription.setMedicationName("Amoxicillin");
+        prescription.setTicketId(ticketId);
+        prescription.setAccessToken("token-123");
+        prescription.setFulfillmentStatus(PrescriptionFulfillmentStatus.PENDING);
+
+        String payload = prescriptionService.buildQrPayloadUrl(prescription);
+
+        assertTrue(payload.contains("Doctor: Dr. Sara Ali"));
+        assertTrue(payload.contains("Patient: Demo Patient"));
+        assertTrue(payload.contains("Medication: Amoxicillin"));
+        assertTrue(payload.contains("Ticket ID: " + ticketId));
+        assertTrue(payload.contains("Token: token-123"));
     }
 }

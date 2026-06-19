@@ -29,7 +29,7 @@ public class DoctorCatalogController {
 
     @GetMapping
     public List<DoctorOptionDto> getDoctors() {
-        return doctorRepository.findAll().stream()
+        return doctorRepository.findByActiveTrueAndUser_EnabledTrueOrderByNameAsc().stream()
                 .map(doctor -> new DoctorOptionDto(doctor.getId(), doctor.getName(), doctor.getSpecialization()))
                 .toList();
     }

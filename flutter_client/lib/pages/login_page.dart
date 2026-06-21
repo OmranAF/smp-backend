@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import '../api_client.dart';
 import '../models.dart';
 import '../session.dart';
-import 'thread_setup_page.dart';
+import 'doctor_page.dart';
+import 'patient_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,7 +21,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  AppRole _role = AppRole.doctor;
   bool _loading = false;
   String? _error;
 
@@ -49,10 +49,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final api = ApiClient(baseUrl);
-      final user = switch (_role) {
-        AppRole.doctor => await api.loginDoctor(email, password),
-        AppRole.patient => await api.loginPatient(email, password),
-      };
+      final user = await api.loginAuto(email, password);
 
       final basic = 'Basic ${base64Encode(utf8.encode('$email:$password'))}';
       final session = SessionContext(
@@ -64,7 +61,10 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => ThreadSetupPage(session: session),
+          builder: (_) => switch (user.role) {
+            AppRole.doctor => DoctorPage(session: session),
+            AppRole.patient => PatientPage(session: session),
+          },
         ),
       );
     } catch (e) {
@@ -91,8 +91,13 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Doctor-Patient Chat',
+                    'Doctor-Patient Portal',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'The app will detect whether your account is a patient or doctor automatically.',
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -101,22 +106,6 @@ class _LoginPageState extends State<LoginPage> {
                       labelText: 'Backend Base URL',
                       helperText: 'Web: http://localhost:8080 | Android emulator: http://10.0.2.2:8080',
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<AppRole>(
-                    initialValue: _role,
-                    decoration: const InputDecoration(labelText: 'Role'),
-                    items: const [
-                      DropdownMenuItem(value: AppRole.doctor, child: Text('Doctor')),
-                      DropdownMenuItem(value: AppRole.patient, child: Text('Patient')),
-                    ],
-                    onChanged: _loading
-                        ? null
-                        : (value) {
-                            if (value != null) {
-                              setState(() => _role = value);
-                            }
-                          },
                   ),
                   const SizedBox(height: 12),
                   TextField(
